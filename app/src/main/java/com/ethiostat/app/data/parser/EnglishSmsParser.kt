@@ -69,6 +69,9 @@ class EnglishSmsParser : SmsParser {
         val packages = mutableListOf<BalancePackage>()
         val segments = smsBody.split(";")
         
+        val voicePackages = mutableListOf<BalancePackage>()
+        val internetPackages = mutableListOf<BalancePackage>()
+        
         for (segment in segments) {
             multiPackagePattern.findAll(segment).forEach { match ->
                 val packageDesc = match.groupValues[1]
@@ -105,22 +108,35 @@ class EnglishSmsParser : SmsParser {
                 
                 val expiryTimestamp = parseExpiryTimestamp("$expiryDate $expiryTime")
                 
-                packages.add(
-                    BalancePackage(
-                        packageType = type,
-                        packageName = packageName,
-                        totalAmount = totalAmount,
-                        remainingAmount = amountInMB,
-                        unit = if (type == PackageType.INTERNET) "MB" else "minutes",
-                        source = "telebirr",
-                        validityDays = validityDays,
-                        expiryDate = "$expiryDate at $expiryTime",
-                        expiryTimestamp = expiryTimestamp,
-                        language = "en"
-                    )
+                val balancePackage = BalancePackage(
+                    packageType = type,
+                    packageName = packageName,
+                    totalAmount = totalAmount,
+                    remainingAmount = amountInMB,
+                    unit = if (type == PackageType.INTERNET) "MB" else "minutes",
+                    source = "telebirr",
+                    validityDays = validityDays,
+                    expiryDate = "$expiryDate at $expiryTime",
+                    expiryTimestamp = expiryTimestamp,
+                    language = "en"
                 )
+                
+                when (type) {
+                    PackageType.VOICE -> voicePackages.add(balancePackage)
+                    PackageType.INTERNET -> internetPackages.add(balancePackage)
+                    else -> packages.add(balancePackage)
+                }
             }
         }
+        
+        // Combine voice packages into a single package
+        if (voicePackages.isNotEmpty()) {
+            val combinedVoice = combineVoicePackages(voicePackages)
+            packages.add(combinedVoice)
+        }
+        
+        // Add internet packages as-is
+        packages.addAll(internetPackages)
         
         return packages
     }
@@ -214,5 +230,74 @@ class EnglishSmsParser : SmsParser {
         } catch (e: Exception) {
             System.currentTimeMillis() + (30 * 24 * 60 * 60 * 1000L)
         }
+    }
+    
+    private fun combineVoicePackages(voicePackages: List<BalancePackage>): BalancePackage {
+        if (voicePackages.isEmpty()) {
+            return createZeroVoicePackage()
+        }
+        
+        var totalMinutes = 0.0
+        var totalSeconds = 0.0
+        var combinedTotal = 0.0
+        var latestExpiry = ""
+        var latestTimestamp = 0L
+        
+        voicePackages.forEach { pkg ->
+            // Parse minutes and seconds from remaining amount
+            val remainingText = pkg.remainingAmount.toString()
+            val voiceMatch = voiceBalancePattern.find(remainingText)
+            
+            if (voiceMatch != null) {
+                totalMinutes += voiceMatch.groupValues[1].toDoubleOrNull() ?: 0.0
+                totalSeconds += voiceMatch.groupValues[2].toDoubleOrNull() ?: 0.0
+            } else {
+                // If no specific pattern, treat as minutes
+                totalMinutes += pkg.remainingAmount
+            }
+            
+            combinedTotal += pkg.totalAmount
+            
+            // Use the latest expiry date
+            if (pkg.expiryTimestamp > latestTimestamp) {
+                latestTimestamp = pkg.expiryTimestamp
+                latestExpiry = pkg.expiryDate
+            }
+        }
+        
+        // Convert excess seconds to minutes
+        totalMinutes += totalSeconds / 60
+        val finalSeconds = (totalSeconds % 60).toInt()
+        val finalMinutes = totalMinutes.toInt()
+        
+        val firstPackage = voicePackages.first()
+        
+        return BalancePackage(
+            packageType = PackageType.VOICE,
+            packageName = "Combined Voice Packages",
+            totalAmount = combinedTotal,
+            remainingAmount = totalMinutes,
+            unit = "minutes",
+            source = firstPackage.source,
+            validityDays = firstPackage.validityDays,
+            expiryDate = latestExpiry,
+            expiryTimestamp = latestTimestamp,
+            language = firstPackage.language
+        )
+    }
+    
+    private fun createZeroVoicePackage(): BalancePackage {
+        return BalancePackage(
+            packageType = PackageType.VOICE,
+            packageName = "No Voice Package",
+            totalAmount = 0.0,
+            remainingAmount = 0.0,
+            unit = "minutes",
+            source = "telebirr",
+            validityDays = 0,
+            expiryDate = "No expiry",
+            expiryTimestamp = 0L,
+            language = "en"
+        )
     }
 }

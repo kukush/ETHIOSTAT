@@ -143,4 +143,12 @@ class EthioStatRepositoryImpl(
             )
         )
     }
+    
+    override suspend fun getStoredMessagesBySenderSince(sender: String, fromTimestamp: Long): List<SmsLogEntity> {
+        return smsLogDao.getMessagesBySenderSince(sender, fromTimestamp)
+    }
+    
+    override suspend fun getLatestMessageBySender(sender: String): SmsLogEntity? {
+        return smsLogDao.getLatestMessageBySender(sender)
+    }
 }

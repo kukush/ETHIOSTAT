@@ -3,6 +3,7 @@ package com.ethiostat.app.ui.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ethiostat.app.domain.model.AppLanguage
+import com.ethiostat.app.domain.model.BalancePackageFactory
 import com.ethiostat.app.domain.model.TimePeriod
 import com.ethiostat.app.domain.repository.IEthioStatRepository
 import com.ethiostat.app.domain.usecase.ChangeLanguageUseCase
@@ -57,12 +58,13 @@ class DashboardViewModel(
                     
                     _state.update {
                         it.copy(
-                            balances = balances,
+                            balances = if (balances.isNotEmpty()) balances else BalancePackageFactory.createDefaultZeroBalances(),
                             transactions = transactions,
                             financialSummary = summary,
                             currentLanguage = language,
                             isLoading = false,
-                            error = null
+                            error = null,
+                            hasRealData = balances.isNotEmpty()
                         )
                     }
                 }

@@ -13,6 +13,15 @@ interface SmsLogDao {
     @Query("SELECT * FROM sms_log WHERE parsed = 0 ORDER BY receivedAt DESC")
     fun getUnparsedLogs(): Flow<List<SmsLogEntity>>
     
+    @Query("SELECT * FROM sms_log WHERE sender = :sender AND receivedAt >= :fromTimestamp ORDER BY receivedAt DESC")
+    suspend fun getMessagesBySenderSince(sender: String, fromTimestamp: Long): List<SmsLogEntity>
+    
+    @Query("SELECT * FROM sms_log WHERE sender = :sender ORDER BY receivedAt DESC LIMIT 1")
+    suspend fun getLatestMessageBySender(sender: String): SmsLogEntity?
+    
+    @Query("SELECT * FROM sms_log WHERE sender IN (:senders) AND receivedAt >= :fromTimestamp ORDER BY receivedAt DESC")
+    suspend fun getMessagesBySendersSince(senders: List<String>, fromTimestamp: Long): List<SmsLogEntity>
+    
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLog(log: SmsLogEntity)
     

@@ -1,6 +1,7 @@
 package com.ethiostat.app.domain.repository
 
 import com.ethiostat.app.domain.model.*
+import com.ethiostat.app.data.local.entity.SmsLogEntity
 import kotlinx.coroutines.flow.Flow
 
 interface IEthioStatRepository {
@@ -28,6 +29,10 @@ interface IEthioStatRepository {
     suspend fun deleteOldTransactions(olderThan: Long)
     
     suspend fun deleteExpiredPackages()
+    
+    suspend fun getStoredMessagesBySenderSince(sender: String, fromTimestamp: Long): List<SmsLogEntity>
+    
+    suspend fun getLatestMessageBySender(sender: String): SmsLogEntity?
 }
 
 data class AppConfig(

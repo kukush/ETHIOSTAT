@@ -3,14 +3,15 @@ package com.ethiostat.app.ui.dashboard
 import com.ethiostat.app.domain.model.*
 
 data class DashboardState(
-    val balances: List<BalancePackage> = emptyList(),
+    val balances: List<BalancePackage> = BalancePackageFactory.createDefaultZeroBalances(),
     val transactions: List<Transaction> = emptyList(),
     val financialSummary: FinancialSummary = FinancialSummary(),
     val currentLanguage: AppLanguage = AppLanguage.ENGLISH,
     val selectedPeriod: TimePeriod = TimePeriod.WEEKLY,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val syncSuccess: Boolean = false
+    val syncSuccess: Boolean = false,
+    val hasRealData: Boolean = false
 ) {
     val internetPackages: List<BalancePackage>
         get() = balances.filter { it.packageType == PackageType.INTERNET }
