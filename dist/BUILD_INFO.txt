@@ -1,0 +1,20 @@
+ETHIOSTAT Build Information
+========================================
+Build Date: 2026-03-18 00:52:55
+Version Name: 1.0
+Version Code: 1
+
+APK Files:
+- ethiostat-debug.apk (Debug build, ready for testing)
+- ethiostat-release-unsigned.apk (Release build, requires signing)
+
+Installation:
+  adb install -r ethiostat-debug.apk
+
+Configuration:
+  Default senders: 251994, *830*
+  USSD codes: *805#, *804#
+  
+  Configure via gradle.properties or in-app settings
+
+For more information, see README.md

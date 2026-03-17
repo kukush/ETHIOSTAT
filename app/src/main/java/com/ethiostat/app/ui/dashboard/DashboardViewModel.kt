@@ -1,6 +1,5 @@
 package com.ethiostat.app.ui.dashboard
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ethiostat.app.domain.model.AppLanguage
@@ -14,7 +13,6 @@ import kotlinx.coroutines.launch
 
 class DashboardViewModel(
     private val repository: IEthioStatRepository,
-    private val context: Context,
     private val getFinancialSummaryUseCase: GetFinancialSummaryUseCase,
     private val syncBalanceUseCase: SyncBalanceUseCase,
     private val changeLanguageUseCase: ChangeLanguageUseCase

@@ -58,7 +58,6 @@ class MainActivity : ComponentActivity() {
         
         val viewModel = DashboardViewModel(
             repository = repository,
-            context = applicationContext,
             getFinancialSummaryUseCase = GetFinancialSummaryUseCase(),
             syncBalanceUseCase = SyncBalanceUseCase(applicationContext),
             changeLanguageUseCase = ChangeLanguageUseCase(repository)
