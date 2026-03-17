@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -21,7 +23,7 @@ android {
         }
         
         // BuildConfig fields from gradle.properties
-        val properties = java.util.Properties()
+        val properties = Properties()
         properties.load(project.rootProject.file("gradle.properties").inputStream())
         
         buildConfigField("String", "DEFAULT_TELECOM_SENDER", "\"${properties.getProperty("DEFAULT_TELECOM_SENDER")}\"")
@@ -44,16 +46,17 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
     
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     
     composeOptions {

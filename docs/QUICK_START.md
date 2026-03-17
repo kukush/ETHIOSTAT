@@ -68,8 +68,8 @@ git push -u origin main
 
 ### ✅ Documentation
 - `README.md` - Full project documentation
-- `IMPLEMENTATION_SUMMARY.md` - Technical implementation details
-- `DEPLOYMENT_GUIDE.md` - Complete deployment instructions
+- `docs/IMPLEMENTATION_SUMMARY.md` - Technical implementation details
+- `docs/DEPLOYMENT_GUIDE.md` - Complete deployment instructions
 - `docs/` - 5 comprehensive technical guides
   - MVI Architecture
   - Multilingual Support
@@ -295,8 +295,8 @@ adb logcat -s AndroidRuntime:E EthioStat:D
 ## 📚 Additional Resources
 
 - **README.md** - Complete project overview
-- **DEPLOYMENT_GUIDE.md** - Detailed deployment instructions
-- **IMPLEMENTATION_SUMMARY.md** - Architecture and code details
+- **docs/DEPLOYMENT_GUIDE.md** - Detailed deployment instructions
+- **docs/IMPLEMENTATION_SUMMARY.md** - Architecture and code details
 - **docs/** - Technical guides for MVI, multilingual, parsing, etc.
 
 ---
@@ -327,8 +327,8 @@ Your app is working correctly if:
 ## 📞 Need Help?
 
 If you encounter issues:
-1. Check the **DEPLOYMENT_GUIDE.md** for detailed instructions
-2. Review **IMPLEMENTATION_SUMMARY.md** for architecture details
+1. Check the **docs/DEPLOYMENT_GUIDE.md** for detailed instructions
+2. Review **docs/IMPLEMENTATION_SUMMARY.md** for architecture details
 3. Run with `--stacktrace` flag to see detailed errors
 4. Check `adb logcat` for runtime errors
 
