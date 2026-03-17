@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">ኢትዮስታት</string>
+    
+    <!-- Navigation -->
+    <string name="dashboard">ዋና ገጽ</string>
+    <string name="settings">ቅንብሮች</string>
+    <string name="about">ስለ ፕሮግራሙ</string>
+    
+    <!-- Balance Cards -->
+    <string name="internet_balance">የኢንተርኔት ቀሪ</string>
+    <string name="voice_balance">የድምጽ ቀሪ</string>
+    <string name="bonus_funds">ጉርሻ ገንዘብ</string>
+    <string name="night_bonus">የሌሊት ጉርሻ</string>
+    
+    <!-- Actions -->
+    <string name="sync_now">አሁን አመሳስል</string>
+    <string name="refresh">አድስ</string>
+    <string name="reset">ወደ ነባሪ መልስ</string>
+    <string name="save">አስቀምጥ</string>
+    <string name="cancel">ሰርዝ</string>
+    <string name="add">ጨምር</string>
+    <string name="remove">አስወግድ</string>
+    
+    <!-- Units -->
+    <string name="mb_unit">ሜባ</string>
+    <string name="gb_unit">ጊባ</string>
+    <string name="minutes_unit">ደቂቃዎች</string>
+    <string name="seconds_unit">ሰከንዶች</string>
+    <string name="birr_unit">ብር</string>
+    
+    <!-- Time -->
+    <string name="expires_in">በ %d ቀናት ውስጥ ያበቃል</string>
+    <string name="expired">አብቅቷል</string>
+    <string name="expires_today">ዛሬ ያበቃል</string>
+    <string name="expires_tomorrow">ነገ ያበቃል</string>
+    
+    <!-- Financial -->
+    <string name="income">ገቢ</string>
+    <string name="expense">ወጪ</string>
+    <string name="total_income">ጠቅላላ ገቢ</string>
+    <string name="total_expense">ጠቅላላ ወጪ</string>
+    <string name="net_balance">የተጣራ ቀሪ</string>
+    <string name="transaction_history">የግብይት ታሪክ</string>
+    
+    <!-- Time Periods -->
+    <string name="daily">ዕለታዊ</string>
+    <string name="weekly">ሳምንታዊ</string>
+    <string name="monthly">ወርሃዊ</string>
+    <string name="all_time">ሁሉንም ጊዜ</string>
+    
+    <!-- Language -->
+    <string name="language">ቋንቋ</string>
+    <string name="english">እንግሊዝኛ</string>
+    <string name="amharic">አማርኛ</string>
+    
+    <!-- Settings Sections -->
+    <string name="sender_configuration">የላኪ ማዋቀሪያ</string>
+    <string name="telecom_senders">የቴሌኮም ላኪዎች</string>
+    <string name="telebirr_senders">የቴሌብር ላኪዎች</string>
+    <string name="bank_senders">የባንክ ላኪዎች</string>
+    <string name="ussd_codes">የዩኤስኤስዲ ኮዶች</string>
+    <string name="ussd_balance">የቀሪ ሂሳብ ፈተሽ</string>
+    <string name="ussd_packages">የፓኬጅ መረጃ</string>
+    <string name="ussd_data_check">የዳታ ፈተሽ</string>
+    <string name="sms_parser">የኤስኤምኤስ ፓርሰር</string>
+    <string name="parse_english">የእንግሊዝኛ ኤስኤምኤስ ፓርስ</string>
+    <string name="parse_amharic">የአማርኛ ኤስኤምኤስ ፓርስ</string>
+    
+    <!-- Messages -->
+    <string name="no_packages">ምንም ፓኬጆች አልተገኙም</string>
+    <string name="no_transactions">ገና ምንም ግብይቶች የሉም</string>
+    <string name="loading">በመጫን ላይ…</string>
+    <string name="error_occurred">ስህተት ተከስቷል</string>
+    <string name="sync_success">ማመሳሰል ተሳክቷል</string>
+    <string name="settings_saved">ቅንብሮች ተቀምጠዋል</string>
+    
+    <!-- Permissions -->
+    <string name="permission_sms_required">የሂሳብ መልዕክቶችን ለማንበብ የኤስኤምኤስ ፈቃድ ያስፈልጋል</string>
+    <string name="permission_call_required">ለዩኤስኤስዲ ማመሳሰል የጥሪ ፈቃድ ያስፈልጋል</string>
+    <string name="grant_permission">ፈቃድ ስጥ</string>
+    
+    <!-- Package Types -->
+    <string name="monthly_internet">ወርሃዊ ኢንተርኔት</string>
+    <string name="weekly_package">ሳምንታዊ ፓኬጅ</string>
+    <string name="voice_package">የድምጽ ፓኬጅ</string>
+    
+    <!-- Dialogs -->
+    <string name="add_sender">ላኪ ጨምር</string>
+    <string name="enter_sender_name">የላኪ ስም ወይም ቁጥር ያስገቡ</string>
+    <string name="invalid_ussd_code">ልክ ያልሆነ የዩኤስኤስዲ ኮድ ቅርጸት</string>
+    <string name="confirm_reset">ወደ ነባሪ ቅንብሮች መልስ?</string>
+</resources>
