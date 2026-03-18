@@ -79,8 +79,17 @@ class EthioStatRepositoryImpl(
         }
         
         if (parsedData.isParsed) {
+            // Delete old balances of same type+source before inserting fresh data
+            parsedData.packages.forEach { pkg ->
+                balanceDao.deleteByTypeAndSource(pkg.packageType.name, pkg.source)
+            }
             parsedData.packages.forEach { insertBalance(it) }
-            parsedData.transaction?.let { insertTransaction(it) }
+            parsedData.transaction?.let { txn ->
+                val isDuplicate = transactionDao.countBySourceAndTimestamp(txn.source, timestamp) > 0
+                if (!isDuplicate) {
+                    insertTransaction(txn.copy(timestamp = timestamp))
+                }
+            }
             updateLastReadTimestamp(timestamp)
             
             if (config.enableSmsLogging) {
@@ -104,17 +113,18 @@ class EthioStatRepositoryImpl(
     }
     
     private suspend fun shouldProcessSms(sender: String, timestamp: Long, config: AppConfig): Boolean {
-        if (timestamp <= config.lastReadTimestamp) {
-            return false
-        }
-        
         val telecomSenders = config.telecomSenders.split(",").map { it.trim() }
         val telebirrSenders = config.telebirrSenders.split(",").map { it.trim() }
         val bankSenders = config.bankSenders.split(",").map { it.trim() }
         
         val allSenders = telecomSenders + telebirrSenders + bankSenders
+        val allowed = allSenders.any { configSender ->
+            val normalized = configSender.replace("*", "").trim()
+            normalized.isNotEmpty() && (sender.contains(normalized, ignoreCase = true) || normalized.contains(sender, ignoreCase = true))
+        }
         
-        return allSenders.any { sender.contains(it, ignoreCase = true) }
+        android.util.Log.d("EthioStat", "shouldProcessSms: sender=$sender allowed=$allowed")
+        return allowed
     }
     
     private suspend fun initializeDefaultConfig(): AppConfig {

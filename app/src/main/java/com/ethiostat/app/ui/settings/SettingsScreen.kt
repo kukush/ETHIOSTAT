@@ -10,13 +10,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.lazy.LazyColumn
+import com.ethiostat.app.R
 import com.ethiostat.app.domain.model.AppLanguage
+import com.ethiostat.app.domain.model.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     currentLanguage: AppLanguage,
+    currentThemeMode: ThemeMode,
     onLanguageChange: (AppLanguage) -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     Scaffold(
@@ -30,20 +35,78 @@ fun SettingsScreen(
                             contentDescription = "Back"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            LanguageSection(
-                currentLanguage = currentLanguage,
-                onLanguageChange = onLanguageChange
+            item {
+                AppearanceSection(
+                    currentThemeMode = currentThemeMode,
+                    onThemeModeChange = onThemeModeChange
+                )
+            }
+            item {
+                LanguageSection(
+                    currentLanguage = currentLanguage,
+                    onLanguageChange = onLanguageChange
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppearanceSection(
+    currentThemeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Appearance",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
+            val modes = listOf(
+                ThemeMode.DARK to "Dark",
+                ThemeMode.LIGHT to "Light",
+                ThemeMode.SYSTEM to "Follow System"
+            )
+            modes.forEach { (mode, label) ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = currentThemeMode == mode,
+                            onClick = { onThemeModeChange(mode) },
+                            role = Role.RadioButton
+                        )
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = currentThemeMode == mode,
+                        onClick = null
+                    )
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                }
+            }
         }
     }
 }

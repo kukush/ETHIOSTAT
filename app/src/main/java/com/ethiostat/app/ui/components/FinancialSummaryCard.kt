@@ -14,12 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ethiostat.app.R
 import com.ethiostat.app.domain.model.FinancialSummary
+import com.ethiostat.app.domain.model.TimePeriod
 import com.ethiostat.app.ui.theme.ErrorRed
 import com.ethiostat.app.ui.theme.SuccessGreen
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FinancialSummaryCard(
     summary: FinancialSummary,
+    selectedPeriod: TimePeriod = TimePeriod.WEEKLY,
+    onPeriodChange: (TimePeriod) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -33,13 +37,37 @@ fun FinancialSummaryCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text(
-                text = stringResource(R.string.transaction_history),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.transaction_history),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                listOf(
+                    TimePeriod.DAILY to stringResource(R.string.daily),
+                    TimePeriod.WEEKLY to stringResource(R.string.weekly),
+                    TimePeriod.MONTHLY to stringResource(R.string.monthly)
+                ).forEach { (period, label) ->
+                    FilterChip(
+                        selected = selectedPeriod == period,
+                        onClick = { onPeriodChange(period) },
+                        label = { Text(label, style = MaterialTheme.typography.labelMedium) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
             
             Row(
                 modifier = Modifier.fillMaxWidth(),

@@ -129,11 +129,53 @@ class SmsContentReaderService(private val context: Context) {
     /**
      * Reads all SMS messages from telecom and telebirr senders in the last specified days
      */
-    fun readTelecomAndTelebirrMessages(daysBack: Int = 7): List<SmsLogEntity> {
+    fun readTelecomAndTelebirrMessages(daysBack: Int = 30): List<SmsLogEntity> {
         val fromTimestamp = System.currentTimeMillis() - (daysBack * 24 * 60 * 60 * 1000L)
-        val senders = listOf("251994", "*830*", "830")
+        return readMessagesByAddressPatternSince(listOf("251994", "830"), fromTimestamp)
+    }
+
+    /**
+     * Reads SMS messages using LIKE pattern matching on address (handles +prefix, display names, etc.)
+     */
+    fun readMessagesByAddressPatternSince(patterns: List<String>, fromTimestamp: Long): List<SmsLogEntity> {
+        val messages = mutableListOf<SmsLogEntity>()
+        if (patterns.isEmpty()) return messages
         
-        return readMessagesBySendersSince(senders, fromTimestamp)
+        try {
+            val conditions = patterns.joinToString(" OR ") { "${Telephony.Sms.ADDRESS} LIKE ?" }
+            val selection = "($conditions) AND ${Telephony.Sms.DATE} >= ?"
+            val selectionArgs = patterns.map { "%$it%" }.toTypedArray() + fromTimestamp.toString()
+            val sortOrder = "${Telephony.Sms.DATE} ASC LIMIT 100"
+
+            android.util.Log.d("EthioStat", "ContentResolver query: selection=$selection, args=${selectionArgs.toList()}")
+
+            val cursor = context.contentResolver.query(
+                Uri.parse(SMS_URI),
+                PROJECTION,
+                selection,
+                selectionArgs,
+                sortOrder
+            )
+
+            val count = cursor?.count ?: 0
+            android.util.Log.d("EthioStat", "ContentResolver found $count messages")
+
+            cursor?.use { c ->
+                while (c.moveToNext()) {
+                    val smsEntity = cursorToSmsLogEntity(c)
+                    if (smsEntity != null) {
+                        android.util.Log.d("EthioStat", "Found SMS from ${smsEntity.sender}: ${smsEntity.body.take(80)}")
+                        messages.add(smsEntity)
+                    }
+                }
+            }
+        } catch (e: SecurityException) {
+            android.util.Log.e("EthioStat", "Permission denied reading SMS: ${e.message}")
+        } catch (e: Exception) {
+            android.util.Log.e("EthioStat", "Error reading SMS: ${e.message}")
+        }
+
+        return messages
     }
     
     /**

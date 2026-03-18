@@ -12,40 +12,17 @@ class ReadStoredSmsUseCase(
     
     suspend operator fun invoke(): Result<List<ParsedSmsData>> {
         return try {
-            val results = mutableListOf<ParsedSmsData>()
-            
-            // First, try to sync with ContentResolver if available
-            context?.let { ctx ->
-                val syncUseCase = SyncSmsContentUseCase(ctx, repository)
-                syncUseCase.syncAllTelecomAndTelebirrMessages(7)
+            if (context != null) {
+                val syncUseCase = SyncSmsContentUseCase(context, repository)
+                val syncResult = syncUseCase.syncAllTelecomAndTelebirrMessages(30)
+                syncResult.getOrNull()?.let {
+                    val total = it.telecomProcessed + it.telebirrProcessed
+                    android.util.Log.d("EthioStat", "Auto-sync completed: telecom=${it.telecomProcessed} telebirr=${it.telebirrProcessed} total=$total")
+                } ?: android.util.Log.e("EthioStat", "Auto-sync failed: ${syncResult.exceptionOrNull()?.message}")
             }
-            
-            // Read telebirr financial messages from last 7 days (from local database)
-            val oneWeekAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
-            val telebirrMessages = repository.getStoredMessagesBySenderSince("*830*", oneWeekAgo)
-            
-            telebirrMessages.forEach { smsLog ->
-                if (!smsLog.parsed) { // Only process if not already parsed
-                    val parsed = repository.processSms(smsLog.sender, smsLog.body, smsLog.receivedAt)
-                    if (parsed.isParsed) {
-                        results.add(parsed)
-                    }
-                }
-            }
-            
-            // Read latest telecom balance message
-            val telecomMessage = repository.getLatestMessageBySender("251994")
-            telecomMessage?.let { smsLog ->
-                if (!smsLog.parsed) { // Only process if not already parsed
-                    val parsed = repository.processSms(smsLog.sender, smsLog.body, smsLog.receivedAt)
-                    if (parsed.isParsed) {
-                        results.add(parsed)
-                    }
-                }
-            }
-            
-            Result.success(results)
+            Result.success(emptyList())
         } catch (e: Exception) {
+            android.util.Log.e("EthioStat", "ReadStoredSmsUseCase error: ${e.message}")
             Result.failure(e)
         }
     }

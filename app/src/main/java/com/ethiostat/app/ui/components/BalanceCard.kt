@@ -31,65 +31,56 @@ fun BalanceCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = cardColor.copy(alpha = 0.1f)
+            containerColor = cardColor.copy(alpha = 0.08f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = balance.packageName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = cardColor
-                    )
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text(
-                        text = formatAmount(balance.remainingAmount, balance.unit),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    Text(
-                        text = "of ${formatAmount(balance.totalAmount, balance.unit)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = balance.packageName,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = cardColor
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = formatAmount(balance.remainingAmount, balance.unit),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "of ${formatAmount(balance.totalAmount, balance.unit)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ExpiryBadge(balance = balance)
+                    UsageBadge(usagePercentage = balance.usagePercentage, cardColor = cardColor)
                 }
-                
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
                     progress = (balance.usagePercentage / 100f).coerceIn(0f, 1f),
-                    modifier = Modifier.size(80.dp),
+                    modifier = Modifier.size(52.dp),
                     color = cardColor,
-                    strokeWidth = 8.dp,
-                    trackColor = cardColor.copy(alpha = 0.2f)
+                    strokeWidth = 5.dp,
+                    trackColor = cardColor.copy(alpha = 0.15f)
                 )
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                ExpiryBadge(balance = balance)
-                
-                UsageBadge(
-                    usagePercentage = balance.usagePercentage,
-                    cardColor = cardColor
+                Text(
+                    text = "${balance.usagePercentage.roundToInt()}%",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = cardColor
                 )
             }
         }

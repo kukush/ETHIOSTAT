@@ -13,6 +13,8 @@
     <string name="voice_balance">Voice Balance</string>
     <string name="bonus_funds">Bonus Funds</string>
     <string name="night_bonus">Night Bonus</string>
+    <string name="promotion">Promotion</string>
+    <string name="telecom_service">Telecom Service</string>
     
     <!-- Actions -->
     <string name="sync_now">Sync Now</string>
@@ -50,6 +52,13 @@
     <string name="monthly">Monthly</string>
     <string name="all_time">All Time</string>
     
+    <!-- Appearance -->
+    <string name="appearance">Appearance</string>
+    <string name="theme_mode">Theme</string>
+    <string name="dark_mode">Dark</string>
+    <string name="light_mode">Light</string>
+    <string name="system_default">Follow System</string>
+
     <!-- Language -->
     <string name="language">Language</string>
     <string name="english">English</string>

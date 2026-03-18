@@ -27,12 +27,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import android.content.Context
+import android.content.res.Configuration
+import com.ethiostat.app.domain.model.AppLanguage
+import com.ethiostat.app.domain.model.ThemeMode
+import java.util.Locale
+import com.ethiostat.app.ui.dashboard.DashboardIntent
 import com.ethiostat.app.ui.dashboard.DashboardScreen
 import com.ethiostat.app.ui.dashboard.DashboardViewModel
+import com.ethiostat.app.ui.settings.SettingsIntent
+import com.ethiostat.app.ui.settings.SettingsScreen
+import com.ethiostat.app.ui.settings.SettingsViewModel
 import com.ethiostat.app.ui.theme.EthioStatTheme
 
 class MainActivity : ComponentActivity() {
-    
+
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
     
@@ -44,8 +53,10 @@ class MainActivity : ComponentActivity() {
         val callGranted = permissions[Manifest.permission.CALL_PHONE] == true
         
         if (smsGranted && readSmsGranted) {
-            // Permissions granted, start auto-sync
-            startAutoSync()
+            // Permissions granted, start auto-sync with repository
+            val database = EthioStatDatabase.getDatabase(applicationContext)
+            val repository = createRepository()
+            startAutoSync(repository)
         }
     }
     
@@ -79,18 +90,59 @@ class MainActivity : ComponentActivity() {
             startAutoSync(repository)
         }
         
+        val prefs = getSharedPreferences("ethiostat_prefs", Context.MODE_PRIVATE)
+        val initialThemeKey = prefs.getString("theme_mode", ThemeMode.SYSTEM.key) ?: ThemeMode.SYSTEM.key
+        val initialTheme = ThemeMode.fromKey(initialThemeKey)
+
+        val settingsViewModel = SettingsViewModel(
+            changeLanguageUseCase = ChangeLanguageUseCase(repository),
+            context = applicationContext
+        )
+        settingsViewModel.loadThemeMode()
+
         setContent {
-            EthioStatTheme {
+            val settingsState by settingsViewModel.state.collectAsState()
+            val themeMode = settingsState.currentThemeMode
+            val isDark = when (themeMode) {
+                ThemeMode.DARK -> true
+                ThemeMode.LIGHT -> false
+                ThemeMode.SYSTEM -> androidx.compose.foundation.isSystemInDarkTheme()
+            }
+
+            EthioStatTheme(darkTheme = isDark) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val dashboardState by viewModel.state.collectAsState()
                     var showSettings by remember { mutableStateOf(false) }
-                    
-                    DashboardScreen(
-                        viewModel = viewModel,
-                        onNavigateToSettings = { showSettings = true }
-                    )
+
+                    // Apply locale and force full UI recomposition when language changes
+                    LaunchedEffect(dashboardState.currentLanguage) {
+                        applyLocaleToContext(dashboardState.currentLanguage)
+                    }
+
+                    key(dashboardState.currentLanguage) {
+                        if (showSettings) {
+                            SettingsScreen(
+                                currentLanguage = dashboardState.currentLanguage,
+                                currentThemeMode = settingsState.currentThemeMode,
+                                onLanguageChange = { language ->
+                                    viewModel.processIntent(DashboardIntent.ChangeLanguage(language))
+                                    settingsViewModel.setCurrentLanguage(language)
+                                },
+                                onThemeModeChange = { mode ->
+                                    settingsViewModel.processIntent(SettingsIntent.ChangeThemeMode(mode))
+                                },
+                                onNavigateBack = { showSettings = false }
+                            )
+                        } else {
+                            DashboardScreen(
+                                viewModel = viewModel,
+                                onNavigateToSettings = { showSettings = true }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -125,24 +177,35 @@ class MainActivity : ComponentActivity() {
     }
     
     private fun startAutoSync(repository: IEthioStatRepository? = null) {
+        android.util.Log.d("EthioStat", "Starting auto-sync...")
         scope.launch {
             try {
                 val repo = repository ?: createRepository()
                 val readStoredSmsUseCase = ReadStoredSmsUseCase(repo, applicationContext)
                 
+                android.util.Log.d("EthioStat", "Executing ReadStoredSmsUseCase...")
                 // Read historical SMS messages using ContentResolver + local database
                 val result = readStoredSmsUseCase()
                 
-                if (result.isSuccess) {
-                    val processedMessages = result.getOrNull() ?: emptyList()
-                    // Messages are automatically processed and stored by the use case
+                if (result.isFailure) {
+                    android.util.Log.e("EthioStat", "Auto-sync failed: ${result.exceptionOrNull()?.message}")
                 }
             } catch (e: Exception) {
+                android.util.Log.e("EthioStat", "Auto-sync exception: ${e.message}")
                 e.printStackTrace()
             }
         }
     }
     
+    private fun applyLocaleToContext(language: AppLanguage) {
+        val locale = Locale(language.code)
+        Locale.setDefault(locale)
+        val config = Configuration(resources.configuration)
+        config.setLocale(locale)
+        @Suppress("DEPRECATION")
+        resources.updateConfiguration(config, resources.displayMetrics)
+    }
+
     private fun createRepository(): IEthioStatRepository {
         val database = EthioStatDatabase.getDatabase(applicationContext)
         return EthioStatRepositoryImpl(

@@ -34,6 +34,12 @@ interface BalanceDao {
     @Query("DELETE FROM balance_packages WHERE expiryTimestamp < :timestamp")
     suspend fun deleteExpiredPackages(timestamp: Long = System.currentTimeMillis())
     
+    @Query("DELETE FROM balance_packages WHERE packageType = :packageType AND source = :source")
+    suspend fun deleteByTypeAndSource(packageType: String, source: String)
+
+    @Query("DELETE FROM balance_packages WHERE packageType = :packageType")
+    suspend fun deleteByType(packageType: String)
+
     @Query("DELETE FROM balance_packages")
     suspend fun deleteAllBalances()
 }

@@ -13,6 +13,8 @@
     <string name="voice_balance">የድምጽ ቀሪ</string>
     <string name="bonus_funds">ጉርሻ ገንዘብ</string>
     <string name="night_bonus">የሌሊት ጉርሻ</string>
+    <string name="promotion">ፕሮሞሽን</string>
+    <string name="telecom_service">የቴሌኮም አገልግሎት</string>
     
     <!-- Actions -->
     <string name="sync_now">አሁን አመሳስል</string>
@@ -51,6 +53,13 @@
     <string name="all_time">ሁሉንም ጊዜ</string>
     
     <!-- Language -->
+    <!-- Appearance -->
+    <string name="appearance">መልክ</string>
+    <string name="theme_mode">ገጽታ</string>
+    <string name="dark_mode">ጨለማ</string>
+    <string name="light_mode">ብርሃን</string>
+    <string name="system_default">ስርዓቱን ተከተል</string>
+
     <string name="language">ቋንቋ</string>
     <string name="english">እንግሊዝኛ</string>
     <string name="amharic">አማርኛ</string>

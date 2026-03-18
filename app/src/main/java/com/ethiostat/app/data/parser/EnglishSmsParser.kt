@@ -7,7 +7,7 @@ import java.util.*
 class EnglishSmsParser : SmsParser {
     
     private val multiPackagePattern = Regex(
-        """from\s+([^;]+?)\s+is\s+([\d,]+\.?\d*)\s*(MB|GB|minute|second)\s+with\s+expiry\s+date\s+on\s+(\d{4}-\d{2}-\d{2})\s+at\s+(\d{2}:\d{2}:\d{2})""",
+        """from\s+([^;]+?)\s+is\s+([\d,]+\.?\d*)\s*(MB|GB|minute|second)(?:\s+and\s+\d+\s+second)?\s+with\s+expiry\s+date\s+on\s+(\d{4}-\d{2}-\d{2})\s+at\s+(\d{2}:\d{2}:\d{2})""",
         setOf(RegexOption.IGNORE_CASE)
     )
     
@@ -40,11 +40,25 @@ class EnglishSmsParser : SmsParser {
     private val expenseKeywords = listOf("Monthly Internet Package", "Voice Min", "from telebirr", "purchased")
     
     override fun parse(smsBody: String, sender: String): ParsedSmsData {
+        val allRaw = mutableListOf<BalancePackage>()
+        
+        allRaw.addAll(parseMultiPackageRaw(smsBody))
+        parseWeeklyPackage(smsBody)?.let { allRaw.add(it) }
+        
         val packages = mutableListOf<BalancePackage>()
+        val internetPackages = allRaw.filter { it.packageType == PackageType.INTERNET }
+        val voicePackages = allRaw.filter { it.packageType == PackageType.VOICE }
+        val otherPackages = allRaw.filter { it.packageType != PackageType.INTERNET && it.packageType != PackageType.VOICE }
         
-        packages.addAll(parseMultiPackage(smsBody))
-        
-        parseWeeklyPackage(smsBody)?.let { packages.add(it) }
+        if (internetPackages.isNotEmpty()) {
+            android.util.Log.d("EthioStat", "Combining ${internetPackages.size} internet packages")
+            packages.add(combineInternetPackages(internetPackages))
+        }
+        if (voicePackages.isNotEmpty()) {
+            android.util.Log.d("EthioStat", "Combining ${voicePackages.size} voice packages")
+            packages.add(combineVoicePackages(voicePackages))
+        }
+        packages.addAll(otherPackages)
         
         val transaction = parseTransaction(smsBody, sender)
         
@@ -65,12 +79,9 @@ class EnglishSmsParser : SmsParser {
                 bonusFundsPattern.containsMatchIn(smsBody)
     }
     
-    private fun parseMultiPackage(smsBody: String): List<BalancePackage> {
+    private fun parseMultiPackageRaw(smsBody: String): List<BalancePackage> {
         val packages = mutableListOf<BalancePackage>()
         val segments = smsBody.split(";")
-        
-        val voicePackages = mutableListOf<BalancePackage>()
-        val internetPackages = mutableListOf<BalancePackage>()
         
         for (segment in segments) {
             multiPackagePattern.findAll(segment).forEach { match ->
@@ -121,22 +132,9 @@ class EnglishSmsParser : SmsParser {
                     language = "en"
                 )
                 
-                when (type) {
-                    PackageType.VOICE -> voicePackages.add(balancePackage)
-                    PackageType.INTERNET -> internetPackages.add(balancePackage)
-                    else -> packages.add(balancePackage)
-                }
+                packages.add(balancePackage)
             }
         }
-        
-        // Combine voice packages into a single package
-        if (voicePackages.isNotEmpty()) {
-            val combinedVoice = combineVoicePackages(voicePackages)
-            packages.add(combinedVoice)
-        }
-        
-        // Add internet packages as-is
-        packages.addAll(internetPackages)
         
         return packages
     }
@@ -293,6 +291,58 @@ class EnglishSmsParser : SmsParser {
             totalAmount = 0.0,
             remainingAmount = 0.0,
             unit = "minutes",
+            source = "telebirr",
+            validityDays = 0,
+            expiryDate = "No expiry",
+            expiryTimestamp = 0L,
+            language = "en"
+        )
+    }
+    
+    private fun combineInternetPackages(internetPackages: List<BalancePackage>): BalancePackage {
+        if (internetPackages.isEmpty()) {
+            return createZeroInternetPackage()
+        }
+        
+        var totalMB = 0.0
+        var combinedTotal = 0.0
+        var latestExpiry = ""
+        var latestTimestamp = 0L
+        
+        internetPackages.forEach { pkg ->
+            totalMB += pkg.remainingAmount
+            combinedTotal += pkg.totalAmount
+            
+            // Use the latest expiry date
+            if (pkg.expiryTimestamp > latestTimestamp) {
+                latestTimestamp = pkg.expiryTimestamp
+                latestExpiry = pkg.expiryDate
+            }
+        }
+        
+        val firstPackage = internetPackages.first()
+        
+        return BalancePackage(
+            packageType = PackageType.INTERNET,
+            packageName = "Combined Internet Packages",
+            totalAmount = combinedTotal,
+            remainingAmount = totalMB,
+            unit = "MB",
+            source = firstPackage.source,
+            validityDays = firstPackage.validityDays,
+            expiryDate = latestExpiry,
+            expiryTimestamp = latestTimestamp,
+            language = firstPackage.language
+        )
+    }
+    
+    private fun createZeroInternetPackage(): BalancePackage {
+        return BalancePackage(
+            packageType = PackageType.INTERNET,
+            packageName = "No Internet Package",
+            totalAmount = 0.0,
+            remainingAmount = 0.0,
+            unit = "MB",
             source = "telebirr",
             validityDays = 0,
             expiryDate = "No expiry",

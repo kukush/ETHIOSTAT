@@ -14,7 +14,7 @@ import com.ethiostat.app.data.local.entity.*
         AppConfigEntity::class,
         SmsLogEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class EthioStatDatabase : RoomDatabase() {

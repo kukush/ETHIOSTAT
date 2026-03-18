@@ -1,63 +1,55 @@
 package com.ethiostat.app.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = InternetBlue,
+private val NavyDarkColorScheme = darkColorScheme(
+    primary = BrandBlue,
     secondary = VoiceGreen,
-    tertiary = FundsAmber,
-    background = BackgroundDark,
-    surface = Color(0xFF1E1E1E),
+    tertiary = GoldAccent,
+    background = NavyBackground,
+    surface = NavySurface,
+    surfaceVariant = NavySurfaceVariant,
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.Black,
-    onBackground = TextPrimaryDark,
-    onSurface = TextPrimaryDark,
+    onBackground = Color(0xFFE8EEF4),
+    onSurface = Color(0xFFE8EEF4),
+    onSurfaceVariant = Color(0xFF8CA5BE),
     error = ErrorRed
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = InternetBlue,
+private val StyledLightColorScheme = lightColorScheme(
+    primary = BrandBlue,
     secondary = VoiceGreen,
-    tertiary = FundsAmber,
-    background = BackgroundLight,
-    surface = Color.White,
+    tertiary = GoldAccent,
+    background = LightBackground,
+    surface = LightSurface,
+    surfaceVariant = LightSurfaceVariant,
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.Black,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
+    onBackground = Color(0xFF1A2B3C),
+    onSurface = Color(0xFF1A2B3C),
+    onSurfaceVariant = Color(0xFF4A6278),
     error = ErrorRed
 )
 
 @Composable
 fun EthioStatTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) NavyDarkColorScheme else StyledLightColorScheme
     
     val view = LocalView.current
     if (!view.isInEditMode) {

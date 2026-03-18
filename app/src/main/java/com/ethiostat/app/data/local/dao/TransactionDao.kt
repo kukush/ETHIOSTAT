@@ -37,6 +37,9 @@ interface TransactionDao {
     @Delete
     suspend fun deleteTransaction(transaction: TransactionEntity)
     
+    @Query("SELECT COUNT(*) FROM transactions WHERE source = :source AND timestamp = :smsTimestamp")
+    suspend fun countBySourceAndTimestamp(source: String, smsTimestamp: Long): Int
+
     @Query("DELETE FROM transactions WHERE timestamp < :timestamp")
     suspend fun deleteOldTransactions(timestamp: Long)
     
