@@ -2,6 +2,7 @@ package com.ethiostat.app.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Visibility
@@ -28,8 +29,12 @@ fun FinancialSummaryCard(
     selectedPeriod: TimePeriod = TimePeriod.WEEKLY,
     selectedSourceFilter: AccountSourceType? = null,
     showNetBalance: Boolean = true,
+    accountSources: List<com.ethiostat.app.domain.model.AccountSource> = emptyList(),
+    selectedAccountSource: com.ethiostat.app.domain.model.AccountSource? = null,
     onPeriodChange: (TimePeriod) -> Unit = {},
     onSourceFilterChange: (AccountSourceType?) -> Unit = {},
+    onAccountSourceChange: (com.ethiostat.app.domain.model.AccountSource?) -> Unit = {},
+    onAddSource: () -> Unit = {},
     onToggleNetBalance: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -54,6 +59,17 @@ fun FinancialSummaryCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
+                IconButton(
+                    onClick = onAddSource,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Add Transaction Source",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -79,20 +95,19 @@ fun FinancialSummaryCard(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+                // All Sources tab (default)
                 FilterChip(
-                    selected = selectedSourceFilter == null,
-                    onClick = { onSourceFilterChange(null) },
-                    label = { Text("All", style = MaterialTheme.typography.labelMedium) }
+                    selected = selectedAccountSource == null,
+                    onClick = { onAccountSourceChange(null) },
+                    label = { Text("All Sources", style = MaterialTheme.typography.labelMedium) }
                 )
-                listOf(
-                    AccountSourceType.TELEBIRR to "Telebirr",
-                    AccountSourceType.BANK_CBE to "CBE",
-                    AccountSourceType.BANK_AWASH to "Awash"
-                ).forEach { (sourceType, label) ->
+                
+                // Only enabled user-configured source tabs
+                accountSources.filter { it.isEnabled }.forEach { source ->
                     FilterChip(
-                        selected = selectedSourceFilter == sourceType,
-                        onClick = { onSourceFilterChange(sourceType) },
-                        label = { Text(label, style = MaterialTheme.typography.labelMedium) }
+                        selected = selectedAccountSource?.id == source.id,
+                        onClick = { onAccountSourceChange(source) },
+                        label = { Text(source.displayName, style = MaterialTheme.typography.labelMedium) }
                     )
                 }
             }

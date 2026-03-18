@@ -13,6 +13,7 @@ import com.ethiostat.app.domain.model.MessagePriority
 import com.ethiostat.app.domain.repository.IEthioStatRepository
 import com.ethiostat.app.domain.usecase.ChangeLanguageUseCase
 import com.ethiostat.app.domain.usecase.GetFinancialSummaryUseCase
+import com.ethiostat.app.domain.usecase.ReadTransactionSourceSmsUseCase
 import com.ethiostat.app.domain.usecase.SyncBalanceUseCase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -21,7 +22,8 @@ class DashboardViewModel(
     private val repository: IEthioStatRepository,
     private val getFinancialSummaryUseCase: GetFinancialSummaryUseCase,
     private val syncBalanceUseCase: SyncBalanceUseCase,
-    private val changeLanguageUseCase: ChangeLanguageUseCase
+    private val changeLanguageUseCase: ChangeLanguageUseCase,
+    private val readTransactionSourceSmsUseCase: ReadTransactionSourceSmsUseCase
 ) : ViewModel() {
     
     private val _state = MutableStateFlow(DashboardState())
@@ -43,6 +45,9 @@ class DashboardViewModel(
             is DashboardIntent.FilterBySource -> filterBySource(intent.sourceType)
             is DashboardIntent.ChangeLanguage -> changeLanguage(intent.language)
             is DashboardIntent.ToggleNetBalanceVisibility -> toggleNetBalanceVisibility()
+            is DashboardIntent.SelectAccountSource -> selectAccountSource(intent.source)
+            is DashboardIntent.ShowAccountSourcesScreen -> showAccountSourcesScreen()
+            is DashboardIntent.HideAccountSourcesScreen -> hideAccountSourcesScreen()
             is DashboardIntent.AddAccountSource -> addAccountSource(intent.source)
             is DashboardIntent.EditAccountSource -> editAccountSource(intent.source)
             is DashboardIntent.DeleteAccountSource -> deleteAccountSource(intent.source)
@@ -64,18 +69,36 @@ class DashboardViewModel(
                 combine(
                     repository.getBalances(),
                     repository.getTransactions(),
-                    repository.getConfig(),
-                    repository.getUnreadMessages(),
-                    repository.getUnreadMessageCount()
-                ) { balances, transactions, config, unreadMessages, unreadCount ->
-                    Tuple5(balances, transactions, config, unreadMessages, unreadCount)
-                }.collectLatest { (balances, transactions, config, unreadMessages, unreadCount) ->
+                    repository.getConfig()
+                ) { balances, transactions, config ->
+                    Triple(balances, transactions, config)
+                }.combine(
+                    combine(
+                        repository.getUnreadMessages(),
+                        repository.getUnreadMessageCount(),
+                        repository.getAccountSources()
+                    ) { unreadMessages, unreadCount, accountSources ->
+                        Triple(unreadMessages, unreadCount, accountSources)
+                    }
+                ) { (balances, transactions, config), (unreadMessages, unreadCount, accountSources) ->
+                    Pair(
+                        Triple(balances, transactions, config),
+                        Triple(unreadMessages, unreadCount, accountSources)
+                    )
+                }.collectLatest { (firstTriple, secondTriple) ->
+                    val (balances, transactions, config) = firstTriple
+                    val (unreadMessages, unreadCount, accountSources) = secondTriple
                     val summary = getFinancialSummaryUseCase(
                         transactions,
                         _state.value.selectedPeriod
                     )
                     
                     val language = AppLanguage.fromCode(config?.appLanguage ?: "en")
+                    
+                    android.util.Log.d("EthioStat", "loadData: accountSources.size=${accountSources.size}")
+                    
+                    // Create default sources if they don't exist
+                    ensureDefaultSources(accountSources)
                     
                     _state.update {
                         it.copy(
@@ -85,6 +108,7 @@ class DashboardViewModel(
                             currentLanguage = language,
                             unreadMessageCount = unreadCount,
                             unreadMessages = unreadMessages,
+                            accountSources = accountSources,
                             isLoading = false,
                             error = null,
                             hasRealData = balances.isNotEmpty()
@@ -288,6 +312,17 @@ class DashboardViewModel(
                 android.util.Log.d("EthioStat", "Adding AccountSource: ${source.displayName}")
                 val id = repository.insertAccountSource(source)
                 android.util.Log.d("EthioStat", "Successfully added AccountSource with ID: $id")
+                
+                // Read SMS from the new source if it has a phone number
+                if (source.phoneNumber.isNotBlank()) {
+                    android.util.Log.d("EthioStat", "Reading SMS from new source: ${source.phoneNumber}")
+                    val smsResult = readTransactionSourceSmsUseCase.readFromNewSource(source)
+                    smsResult.onSuccess { smsList ->
+                        android.util.Log.d("EthioStat", "Successfully read ${smsList.size} SMS from ${source.displayName}")
+                    }.onFailure { error ->
+                        android.util.Log.e("EthioStat", "Failed to read SMS from ${source.displayName}: ${error.message}")
+                    }
+                }
             } catch (e: Exception) {
                 android.util.Log.e("EthioStat", "Failed to add source", e)
                 _state.update { it.copy(error = "Failed to add source: ${e.message}") }
@@ -298,8 +333,11 @@ class DashboardViewModel(
     private fun editAccountSource(source: com.ethiostat.app.domain.model.AccountSource) {
         viewModelScope.launch {
             try {
+                android.util.Log.d("EthioStat", "Updating AccountSource: ${source.displayName}")
                 repository.updateAccountSource(source)
+                android.util.Log.d("EthioStat", "Successfully updated AccountSource")
             } catch (e: Exception) {
+                android.util.Log.e("EthioStat", "Failed to update source", e)
                 _state.update { it.copy(error = "Failed to update source: ${e.message}") }
             }
         }
@@ -308,8 +346,11 @@ class DashboardViewModel(
     private fun deleteAccountSource(source: com.ethiostat.app.domain.model.AccountSource) {
         viewModelScope.launch {
             try {
+                android.util.Log.d("EthioStat", "Deleting AccountSource: ${source.displayName}")
                 repository.deleteAccountSource(source)
+                android.util.Log.d("EthioStat", "Successfully deleted AccountSource")
             } catch (e: Exception) {
+                android.util.Log.e("EthioStat", "Failed to delete source", e)
                 _state.update { it.copy(error = "Failed to delete source: ${e.message}") }
             }
         }
@@ -318,9 +359,71 @@ class DashboardViewModel(
     private fun toggleAccountSource(source: com.ethiostat.app.domain.model.AccountSource) {
         viewModelScope.launch {
             try {
-                repository.updateAccountSource(source.copy(isEnabled = !source.isEnabled))
+                val newEnabledState = !source.isEnabled
+                android.util.Log.d("EthioStat", "Toggling AccountSource: ${source.displayName} -> $newEnabledState")
+                repository.updateAccountSource(source.copy(isEnabled = newEnabledState))
+                android.util.Log.d("EthioStat", "Successfully toggled AccountSource")
+                
+                // If the toggled source was selected and is now disabled, deselect it
+                if (!newEnabledState && _state.value.selectedAccountSource?.id == source.id) {
+                    android.util.Log.d("EthioStat", "Deselecting disabled source: ${source.displayName}")
+                    _state.update { it.copy(selectedAccountSource = null) }
+                }
             } catch (e: Exception) {
+                android.util.Log.e("EthioStat", "Failed to toggle source", e)
                 _state.update { it.copy(error = "Failed to toggle source: ${e.message}") }
+            }
+        }
+    }
+    
+    private fun selectAccountSource(source: com.ethiostat.app.domain.model.AccountSource?) {
+        android.util.Log.d("EthioStat", "Selecting AccountSource: ${source?.displayName ?: "All Sources"}")
+        _state.update { it.copy(selectedAccountSource = source) }
+        
+        // Also update the legacy selectedSourceFilter for compatibility
+        val sourceType = source?.type
+        _state.update { it.copy(selectedSourceFilter = sourceType) }
+    }
+    
+    private fun showAccountSourcesScreen() {
+        android.util.Log.d("EthioStat", "ShowAccountSourcesScreen called")
+        _state.update { it.copy(showAccountSourcesScreen = true) }
+    }
+    
+    private fun hideAccountSourcesScreen() {
+        android.util.Log.d("EthioStat", "HideAccountSourcesScreen called")
+        _state.update { it.copy(showAccountSourcesScreen = false) }
+    }
+    
+    private suspend fun ensureDefaultSources(currentSources: List<com.ethiostat.app.domain.model.AccountSource>) {
+        val defaultSources = listOf(
+            com.ethiostat.app.domain.model.AccountSource(
+                name = "Telebirr",
+                displayName = "Telebirr",
+                type = com.ethiostat.app.domain.model.AccountSourceType.TELEBIRR,
+                phoneNumber = ""
+            ),
+            com.ethiostat.app.domain.model.AccountSource(
+                name = "CBE",
+                displayName = "CBE",
+                type = com.ethiostat.app.domain.model.AccountSourceType.BANK_CBE,
+                phoneNumber = ""
+            ),
+            com.ethiostat.app.domain.model.AccountSource(
+                name = "Awash",
+                displayName = "Awash",
+                type = com.ethiostat.app.domain.model.AccountSourceType.BANK_AWASH,
+                phoneNumber = ""
+            )
+        )
+        
+        defaultSources.forEach { defaultSource ->
+            val exists = currentSources.any { 
+                it.displayName.equals(defaultSource.displayName, ignoreCase = true) 
+            }
+            if (!exists) {
+                android.util.Log.d("EthioStat", "Creating default source: ${defaultSource.displayName}")
+                repository.insertAccountSource(defaultSource)
             }
         }
     }

@@ -57,6 +57,7 @@ class SmsReceiver : BroadcastReceiver() {
                     accountSourceDao = database.accountSourceDao(),
                     smsMonitoringConfigDao = database.smsMonitoringConfigDao(),
                     unreadMessageDao = database.unreadMessageDao(),
+                    lastReadSmsDao = database.lastReadSmsDao(),
                     smsParser = MultilingualSmsParser(
                         languageDetector = SmsLanguageDetector(),
                         englishParser = EnglishSmsParser(),

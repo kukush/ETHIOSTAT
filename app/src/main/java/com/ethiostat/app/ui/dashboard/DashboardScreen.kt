@@ -28,7 +28,7 @@ import com.ethiostat.app.domain.model.BalancePackage
 import com.ethiostat.app.domain.model.TimePeriod
 import com.ethiostat.app.ui.components.FinancialSummaryCard
 import com.ethiostat.app.ui.components.UnreadMessageIndicator
-import com.ethiostat.app.ui.components.TransactionSourcesSection
+import com.ethiostat.app.ui.settings.AccountSourcesScreen
 import com.ethiostat.app.ui.theme.FundsAmber
 import com.ethiostat.app.ui.theme.InternetBlue
 import com.ethiostat.app.ui.theme.PromotionPurple
@@ -166,22 +166,36 @@ private fun BalanceList(
                     selectedPeriod = state.selectedPeriod,
                     selectedSourceFilter = state.selectedSourceFilter,
                     showNetBalance = state.showNetBalance,
+                    accountSources = state.accountSources,
+                    selectedAccountSource = state.selectedAccountSource,
                     onPeriodChange = { onIntent(DashboardIntent.FilterTransactions(it)) },
                     onSourceFilterChange = { onIntent(DashboardIntent.FilterBySource(it)) },
+                    onAccountSourceChange = { onIntent(DashboardIntent.SelectAccountSource(it)) },
+                    onAddSource = { onIntent(DashboardIntent.ShowAccountSourcesScreen) },
                     onToggleNetBalance = { onIntent(DashboardIntent.ToggleNetBalanceVisibility) }
                 )
             }
         }
+    }
 
-        // Transaction Source Cards Section
-        if (state.accountSources.isNotEmpty()) {
-            item {
-                TransactionSourcesSection(
-                    accountSources = state.accountSources,
-                    transactionSummaryBySource = state.transactionSummaryBySource
-                )
-            }
-        }
+    // Account Sources Screen
+    if (state.showAccountSourcesScreen) {
+        AccountSourcesScreen(
+            accountSources = state.accountSources,
+            onAddSource = { source ->
+                onIntent(DashboardIntent.AddAccountSource(source))
+            },
+            onEditSource = { source ->
+                onIntent(DashboardIntent.EditAccountSource(source))
+            },
+            onDeleteSource = { source ->
+                onIntent(DashboardIntent.DeleteAccountSource(source))
+            },
+            onToggleSource = { source ->
+                onIntent(DashboardIntent.ToggleAccountSource(source))
+            },
+            onNavigateBack = { onIntent(DashboardIntent.HideAccountSourcesScreen) }
+        )
     }
 }
 

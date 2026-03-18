@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">ETHIOSTAT</string>
+    
+    <!-- Navigation -->
+    <string name="dashboard">Daawwaa</string>
+    <string name="settings">Filannoo</string>
+    <string name="about">Waa\'ee</string>
+    
+    <!-- Balance Cards -->
+    <string name="internet_balance">Qabxii Intarneetii</string>
+    <string name="voice_balance">Qabxii Sagalee</string>
+    <string name="bonus_funds">Dhiyeessa Bonoosaa</string>
+    <string name="night_bonus">Bonoosaa Ganda</string>
+    <string name="promotion">Agarsiisa</string>
+    <string name="telecom_service">Seerivii Telekomii</string>
+    
+    <!-- Actions -->
+    <string name="sync_now">Synchronize Kana</string>
+    <string name="refresh">Deebii Cufi</string>
+    <string name="reset">Deebii Qabxii Fudhatee</string>
+    <string name="save">Galchu</string>
+    <string name="cancel">Dhiisi</string>
+    <string name="add">Dabali</string>
+    <string name="remove">Haqi</string>
+    
+    <!-- Units -->
+    <string name="mb_unit">MB</string>
+    <string name="gb_unit">GB</string>
+    <string name="minutes_unit">Daqiiqaa</string>
+    <string name="seconds_unit">Sekondii</string>
+    <string name="birr_unit">Birr</string>
+    
+    <!-- Time -->
+    <string name="expires_in">Jala %d guyyoo keessatti dhuma</string>
+    <string name="expired">Dheere</string>
+    <string name="expires_today">Har\'aa dhuma</string>
+    <string name="expires_tomorrow">Bodaa dhuma</string>
+    
+    <!-- Financial -->
+    <string name="income">Baay\'ina</string>
+    <string name="expense">Balleessaa</string>
+    <string name="total_income">Baay\'ina Guutuu</string>
+    <string name="total_expense">Balleessaa Guutuu</string>
+    <string name="net_balance">Qabxii Netii</string>
+    <string name="transaction_history">Seenaa Gabaabaa</string>
+    
+    <!-- Time Periods -->
+    <string name="daily">Maqaatin</string>
+    <string name="weekly">Jabdin</string>
+    <string name="monthly">Ji\'iin</string>
+    <string name="all_time">Yeroo Hunda</string>
+    
+    <!-- Accessibility -->
+    <string name="accessibility_service_description">Auto-dismiss USSD dialogs when checking telecom balance. This helps provide a seamless experience when the app automatically checks your internet and voice balance.</string>
+    
+    <!-- Appearance -->
+    <string name="appearance">Mul\'ata</string>
+    <string name="theme_mode">Mata</string>
+    <string name="dark_mode">Adii</string>
+    <string name="light_mode">Caala</string>
+    <string name="system_default">Sirna Addaa</string>
+
+    <!-- Language -->
+    <string name="language">Afaan</string>
+    <string name="english">English</string>
+    <string name="amharic">አማርኛ</string>
+    
+    <!-- Settings Sections -->
+    <string name="sender_configuration">Konfiguraashinii Ergaa</string>
+    <string name="telecom_senders">Ergoonni Telekomii</string>
+    <string name="telebirr_senders">Ergoonni Telebirr</string>
+    <string name="bank_senders">Ergoonnii Baankii</string>
+    <string name="ussd_codes">Koodii USSD</string>
+    <string name="ussd_balance">Qabxii Itti Cufi</string>
+    <string name="ussd_packages">Odeeffannoo Paakeejii</string>
+    <string name="ussd_data_check">Cufi Dhaabaa</string>
+    <string name="sms_parser">Parse SMS</string>
+    <string name="parse_english">Parse SMS Afaan Ingiliziin</string>
+    <string name="parse_amharic">Parse SMS Afaan Amaaraariin</string>
+    
+    <!-- Messages -->
+    <string name="no_packages">Paakeejii hin argamne</string>
+    <string name="no_transactions">Gabaabaa hin jiru</string>
+    <string name="loading">Loading…</string>
+    <string name="error_occurred">Dogoggora uumame</string>
+    <string name="sync_success">Synchronize success</string>
+    <string name="settings_saved">Filannoo galchame</string>
+    
+    <!-- Permissions -->
+    <string name="permission_sms_required">SMS permission is required to read balance messages</string>
+    <string name="permission_call_required">Call permission is required for USSD sync</string>
+    <string name="grant_permission">Ergaa Kenname</string>
+    
+    <!-- Package Types -->
+    <string name="monthly_internet">Intarneetii Ji\'ii</string>
+    <string name="weekly_package">Paakeejii Jaba</string>
+    <string name="voice_package">Paakeejii Sagalee</string>
+    
+    <!-- Dialogs -->
+    <string name="add_sender">Ergaa Dabali</string>
+    <string name="enter_sender_name">Maqaan ykn lakkoofsi ergaa galchi</string>
+    <string name="invalid_ussd_code">Formatii koodii USSD dogoggora</string>
+    <string name="confirm_reset">Deebii qabxii fudhaa?</string>
+</resources>

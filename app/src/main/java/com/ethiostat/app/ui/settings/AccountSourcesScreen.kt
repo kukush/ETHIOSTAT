@@ -41,7 +41,7 @@ fun AccountSourcesScreen(
                 actions = {
                     IconButton(
                         onClick = { showAddDialog = true },
-                        enabled = accountSources.size < 3
+                        enabled = accountSources.count { it.isEnabled } < 3
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Add Source")
                     }
@@ -58,12 +58,13 @@ fun AccountSourcesScreen(
         ) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val enabledCount = accountSources.count { it.isEnabled }
                     Text(
-                        text = "Manage your transaction sources (${accountSources.size}/3)",
+                        text = "Manage your transaction sources ($enabledCount/3)",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (accountSources.size >= 3) {
+                    if (enabledCount >= 3) {
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -81,7 +82,7 @@ fun AccountSourcesScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Maximum of 3 transaction sources reached. Delete a source to add a new one.",
+                                    text = "Maximum of 3 enabled transaction sources reached. Disable a source to add a new one.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
@@ -95,8 +96,14 @@ fun AccountSourcesScreen(
                 AccountSourceCard(
                     source = source,
                     onEdit = { editingSource = source },
-                    onDelete = { onDeleteSource(source) },
-                    onToggle = { onToggleSource(source) }
+                    onDelete = { 
+                        android.util.Log.d("EthioStat", "AccountSourcesScreen: onDelete called for ${source.displayName}")
+                        onDeleteSource(source) 
+                    },
+                    onToggle = { 
+                        android.util.Log.d("EthioStat", "AccountSourcesScreen: onToggle called for ${source.displayName}")
+                        onToggleSource(source) 
+                    }
                 )
             }
 
@@ -143,6 +150,7 @@ fun AccountSourcesScreen(
         AddAccountSourceDialog(
             onDismiss = { showAddDialog = false },
             onAdd = { source ->
+                android.util.Log.d("EthioStat", "AccountSourcesScreen: onAdd called for ${source.displayName}")
                 onAddSource(source)
                 showAddDialog = false
             }
@@ -154,6 +162,7 @@ fun AccountSourcesScreen(
             source = source,
             onDismiss = { editingSource = null },
             onSave = { updatedSource ->
+                android.util.Log.d("EthioStat", "AccountSourcesScreen: onEdit called for ${updatedSource.displayName}")
                 onEditSource(updatedSource)
                 editingSource = null
             }
@@ -225,7 +234,7 @@ private fun AccountSourceCard(
 }
 
 @Composable
-private fun AddAccountSourceDialog(
+fun AddAccountSourceDialog(
     onDismiss: () -> Unit,
     onAdd: (AccountSource) -> Unit
 ) {

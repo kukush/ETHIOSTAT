@@ -66,6 +66,7 @@
     <string name="language">Language</string>
     <string name="english">English</string>
     <string name="amharic">አማርኛ</string>
+    <string name="oromiffa">Afaan Oromoo</string>
     
     <!-- Settings Sections -->
     <string name="sender_configuration">Sender Configuration</string>

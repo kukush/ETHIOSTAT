@@ -66,6 +66,11 @@ interface IEthioStatRepository {
     suspend fun markAllMessagesAsRead()
     
     suspend fun insertUnreadMessage(message: UnreadMessage): Long
+    
+    // Last Read SMS Tracking for Transaction Sources
+    suspend fun getLastReadSmsTimestamp(phoneNumber: String): Long?
+    
+    suspend fun updateLastReadSmsTimestamp(phoneNumber: String, timestamp: Long)
 }
 
 data class AppConfig(

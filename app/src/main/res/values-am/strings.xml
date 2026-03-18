@@ -63,6 +63,7 @@
     <string name="language">ቋንቋ</string>
     <string name="english">እንግሊዝኛ</string>
     <string name="amharic">አማርኛ</string>
+    <string name="oromiffa">አፋን ኦሮሞኛ</string>
     
     <!-- Settings Sections -->
     <string name="sender_configuration">የላኪ ማዋቀሪያ</string>

@@ -19,6 +19,7 @@ class EthioStatRepositoryImpl(
     private val accountSourceDao: AccountSourceDao,
     private val smsMonitoringConfigDao: SmsMonitoringConfigDao,
     private val unreadMessageDao: UnreadMessageDao,
+    private val lastReadSmsDao: LastReadSmsDao,
     private val smsParser: MultilingualSmsParser
 ) : IEthioStatRepository {
     
@@ -209,6 +210,28 @@ class EthioStatRepositoryImpl(
     
     override suspend fun toggleAccountSourceEnabled(id: Long, isEnabled: Boolean) {
         accountSourceDao.updateAccountSourceEnabled(id, isEnabled)
+    }
+    
+    // Last Read SMS Tracking Implementation
+    override suspend fun getLastReadSmsTimestamp(phoneNumber: String): Long? {
+        return lastReadSmsDao.getLastReadSms(phoneNumber)?.lastReadTimestamp
+    }
+    
+    override suspend fun updateLastReadSmsTimestamp(phoneNumber: String, timestamp: Long) {
+        val existing = lastReadSmsDao.getLastReadSms(phoneNumber)
+        if (existing != null) {
+            lastReadSmsDao.update(existing.copy(
+                lastReadTimestamp = timestamp,
+                updatedAt = System.currentTimeMillis()
+            ))
+        } else {
+            lastReadSmsDao.insertOrUpdate(
+                LastReadSmsEntity(
+                    phoneNumber = phoneNumber,
+                    lastReadTimestamp = timestamp
+                )
+            )
+        }
     }
     
     // SMS Monitoring Configuration Implementation

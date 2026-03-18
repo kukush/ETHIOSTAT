@@ -24,6 +24,7 @@ import com.ethiostat.app.domain.repository.IEthioStatRepository
 import com.ethiostat.app.domain.usecase.ChangeLanguageUseCase
 import com.ethiostat.app.domain.usecase.GetFinancialSummaryUseCase
 import com.ethiostat.app.domain.usecase.ReadStoredSmsUseCase
+import com.ethiostat.app.domain.usecase.ReadTransactionSourceSmsUseCase
 import com.ethiostat.app.domain.usecase.SyncBalanceUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,6 +79,7 @@ class MainActivity : ComponentActivity() {
             accountSourceDao = database.accountSourceDao(),
             smsMonitoringConfigDao = database.smsMonitoringConfigDao(),
             unreadMessageDao = database.unreadMessageDao(),
+            lastReadSmsDao = database.lastReadSmsDao(),
             smsParser = MultilingualSmsParser(
                 languageDetector = SmsLanguageDetector(),
                 englishParser = EnglishSmsParser(),
@@ -90,7 +92,8 @@ class MainActivity : ComponentActivity() {
             repository = repository,
             getFinancialSummaryUseCase = GetFinancialSummaryUseCase(),
             syncBalanceUseCase = SyncBalanceUseCase(applicationContext),
-            changeLanguageUseCase = ChangeLanguageUseCase(repository)
+            changeLanguageUseCase = ChangeLanguageUseCase(repository),
+            readTransactionSourceSmsUseCase = ReadTransactionSourceSmsUseCase(repository)
         )
         
         // Start auto-sync if permissions are already granted
@@ -259,6 +262,7 @@ class MainActivity : ComponentActivity() {
             accountSourceDao = database.accountSourceDao(),
             smsMonitoringConfigDao = database.smsMonitoringConfigDao(),
             unreadMessageDao = database.unreadMessageDao(),
+            lastReadSmsDao = database.lastReadSmsDao(),
             smsParser = MultilingualSmsParser(
                 languageDetector = SmsLanguageDetector(),
                 englishParser = EnglishSmsParser(),
