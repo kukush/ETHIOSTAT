@@ -1,15 +1,22 @@
 package com.ethiostat.app.ui.dashboard
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,6 +27,8 @@ import com.ethiostat.app.R
 import com.ethiostat.app.domain.model.BalancePackage
 import com.ethiostat.app.domain.model.TimePeriod
 import com.ethiostat.app.ui.components.FinancialSummaryCard
+import com.ethiostat.app.ui.components.UnreadMessageIndicator
+import com.ethiostat.app.ui.components.TransactionSourcesSection
 import com.ethiostat.app.ui.theme.FundsAmber
 import com.ethiostat.app.ui.theme.InternetBlue
 import com.ethiostat.app.ui.theme.PromotionPurple
@@ -53,16 +62,33 @@ private fun DashboardContent(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Unread message indicator on the left
+                        UnreadMessageIndicator(
+                            unreadCount = state.unreadMessageCount,
+                            onClick = { onIntent(DashboardIntent.ShowUnreadMessages) }
+                        )
+                        
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        
+                        // Spacer to balance the layout
+                        Spacer(modifier = Modifier.width(48.dp))
+                    }
                 },
                 actions = {
-                    IconButton(onClick = { onIntent(DashboardIntent.RefreshBalances) }) {
+                    IconButton(onClick = { onIntent(DashboardIntent.RefreshUssd804) }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = stringResource(R.string.refresh)
+                            contentDescription = "Refresh with *804#"
                         )
                     }
                     IconButton(onClick = { 
@@ -138,7 +164,21 @@ private fun BalanceList(
                 FinancialSummaryCard(
                     summary = state.financialSummary,
                     selectedPeriod = state.selectedPeriod,
-                    onPeriodChange = { onIntent(DashboardIntent.FilterTransactions(it)) }
+                    selectedSourceFilter = state.selectedSourceFilter,
+                    showNetBalance = state.showNetBalance,
+                    onPeriodChange = { onIntent(DashboardIntent.FilterTransactions(it)) },
+                    onSourceFilterChange = { onIntent(DashboardIntent.FilterBySource(it)) },
+                    onToggleNetBalance = { onIntent(DashboardIntent.ToggleNetBalanceVisibility) }
+                )
+            }
+        }
+
+        // Transaction Source Cards Section
+        if (state.accountSources.isNotEmpty()) {
+            item {
+                TransactionSourcesSection(
+                    accountSources = state.accountSources,
+                    transactionSummaryBySource = state.transactionSummaryBySource
                 )
             }
         }
@@ -151,12 +191,14 @@ private fun TelecomServiceSection(
     voicePackages: List<BalancePackage>,
     bonusFunds: List<BalancePackage>
 ) {
-    val internetPkg = internetPackages.firstOrNull()
-    val voicePkg = voicePackages.firstOrNull()
+    var isExpanded by androidx.compose.runtime.remember { mutableStateOf(true) }
+    
+    val internetPkg = internetPackages.firstOrNull() ?: BalancePackage.createZeroInternet()
+    val voicePkg = voicePackages.firstOrNull() ?: BalancePackage.createZeroVoice()
     val bonusPkg = bonusFunds.filter { !it.unit.equals("coins", ignoreCase = true) }.firstOrNull()
-        ?: bonusFunds.firstOrNull()
+        ?: BalancePackage.createZeroBonus()
     val promoPkg = bonusFunds.filter { it.unit.equals("coins", ignoreCase = true) }.firstOrNull()
-        ?: bonusFunds.firstOrNull()
+        ?: BalancePackage.createZeroPromotion()
 
     Card(
         modifier = Modifier
@@ -166,85 +208,101 @@ private fun TelecomServiceSection(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = stringResource(R.string.telecom_service),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 10.dp)
-            )
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                SummaryTab(
-                    label = stringResource(R.string.internet_balance),
-                    value = internetPkg?.let {
-                        if (it.remainingAmount >= 1024) "%.1f GB".format(it.remainingAmount / 1024)
-                        else "%.0f MB".format(it.remainingAmount)
-                    } ?: "--",
-                    subValue = internetPkg?.let {
-                        "/ " + if (it.totalAmount >= 1024) "%.1f GB".format(it.totalAmount / 1024)
-                        else "%.0f MB".format(it.totalAmount)
-                    } ?: "",
-                    progress = internetPkg?.let {
-                        if (it.totalAmount > 0) (it.remainingAmount / it.totalAmount).toFloat().coerceIn(0f, 1f) else 0f
-                    } ?: 0f,
-                    expiryText = packageExpiryLabel(internetPkg),
-                    color = InternetBlue,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
-                )
-                SummaryTab(
-                    label = stringResource(R.string.voice_balance),
-                    value = voicePkg?.let { "${it.remainingAmount.toInt()} min" } ?: "--",
-                    subValue = voicePkg?.let { "/ ${it.totalAmount.toInt()} min" } ?: "",
-                    progress = voicePkg?.let {
-                        if (it.totalAmount > 0) (it.remainingAmount / it.totalAmount).toFloat().coerceIn(0f, 1f) else 0f
-                    } ?: 0f,
-                    expiryText = packageExpiryLabel(voicePkg),
-                    color = VoiceGreen,
-                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = stringResource(R.string.telecom_service),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    // Display account balance in Birr from first fragment
+                    val accountBalance = bonusFunds.firstOrNull { it.packageName == "Account Balance" }
+                    if (accountBalance != null) {
+                        Text(
+                            text = "%.2f Birr".format(accountBalance.remainingAmount),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = if (isExpanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                SummaryTab(
-                    label = stringResource(R.string.bonus_funds),
-                    value = bonusPkg?.let {
-                        if (it.unit.equals("coins", ignoreCase = true)) "${it.remainingAmount.toInt()} Coins"
-                        else "%.0f Br".format(it.remainingAmount)
-                    } ?: "--",
-                    subValue = "",
-                    progress = bonusPkg?.let {
-                        if (it.totalAmount > 0) (it.remainingAmount / it.totalAmount).toFloat().coerceIn(0f, 1f) else 1f
-                    } ?: 0f,
-                    expiryText = packageExpiryLabel(bonusPkg),
-                    color = FundsAmber,
-                    modifier = Modifier.weight(1f)
-                )
-                SummaryTab(
-                    label = stringResource(R.string.promotion),
-                    value = promoPkg?.let {
-                        if (it.unit.equals("coins", ignoreCase = true)) "${it.remainingAmount.toInt()} Coins"
-                        else "%.0f Br".format(it.remainingAmount)
-                    } ?: "--",
-                    subValue = "",
-                    progress = promoPkg?.let {
-                        if (it.totalAmount > 0) (it.remainingAmount / it.totalAmount).toFloat().coerceIn(0f, 1f) else 1f
-                    } ?: 0f,
-                    expiryText = packageExpiryLabel(promoPkg),
-                    color = PromotionPurple,
-                    modifier = Modifier.weight(1f)
-                )
+            
+            if (isExpanded) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SummaryTab(
+                        label = stringResource(R.string.internet_balance),
+                        value = if (internetPkg.remainingAmount >= 1024) "%.1f GB".format(internetPkg.remainingAmount / 1024)
+                            else "%.0f MB".format(internetPkg.remainingAmount),
+                        subValue = "/ " + if (internetPkg.totalAmount >= 1024) "%.1f GB".format(internetPkg.totalAmount / 1024)
+                            else "%.0f MB".format(internetPkg.totalAmount),
+                        progress = if (internetPkg.totalAmount > 0) (internetPkg.remainingAmount / internetPkg.totalAmount).toFloat().coerceIn(0f, 1f) else 0f,
+                        expiryText = packageExpiryLabel(internetPkg),
+                        color = InternetBlue,
+                        modifier = Modifier.weight(1f)
+                    )
+                    SummaryTab(
+                        label = stringResource(R.string.voice_balance),
+                        value = "${voicePkg.remainingAmount.toInt()} min",
+                        subValue = "/ ${voicePkg.totalAmount.toInt()} min",
+                        progress = if (voicePkg.totalAmount > 0) (voicePkg.remainingAmount / voicePkg.totalAmount).toFloat().coerceIn(0f, 1f) else 0f,
+                        expiryText = packageExpiryLabel(voicePkg),
+                        color = VoiceGreen,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SummaryTab(
+                        label = stringResource(R.string.bonus_funds),
+                        value = if (bonusPkg.unit.equals("coins", ignoreCase = true)) "${bonusPkg.remainingAmount.toInt()} Coins"
+                            else "%.0f Br".format(bonusPkg.remainingAmount),
+                        subValue = "",
+                        progress = if (bonusPkg.totalAmount > 0) (bonusPkg.remainingAmount / bonusPkg.totalAmount).toFloat().coerceIn(0f, 1f) else 1f,
+                        expiryText = packageExpiryLabel(bonusPkg),
+                        color = FundsAmber,
+                        modifier = Modifier.weight(1f)
+                    )
+                    SummaryTab(
+                        label = stringResource(R.string.promotion),
+                        value = if (promoPkg.unit.equals("coins", ignoreCase = true)) "${promoPkg.remainingAmount.toInt()} Coins"
+                            else "%.0f Br".format(promoPkg.remainingAmount),
+                        subValue = "",
+                        progress = if (promoPkg.totalAmount > 0) (promoPkg.remainingAmount / promoPkg.totalAmount).toFloat().coerceIn(0f, 1f) else 1f,
+                        expiryText = packageExpiryLabel(promoPkg),
+                        color = PromotionPurple,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }
 }
 
-private fun packageExpiryLabel(pkg: BalancePackage?): String {
-    if (pkg == null || pkg.expiryTimestamp == 0L) return ""
+private fun packageExpiryLabel(pkg: BalancePackage): String {
+    if (pkg.expiryTimestamp == 0L) return pkg.expiryDate
     return when {
         pkg.isExpired -> "Expired"
         pkg.daysUntilExpiry == 0 -> "Today"

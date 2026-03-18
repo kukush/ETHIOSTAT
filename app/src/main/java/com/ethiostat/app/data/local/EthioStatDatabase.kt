@@ -12,9 +12,12 @@ import com.ethiostat.app.data.local.entity.*
         BalancePackageEntity::class,
         TransactionEntity::class,
         AppConfigEntity::class,
-        SmsLogEntity::class
+        SmsLogEntity::class,
+        AccountSourceEntity::class,
+        SmsMonitoringConfigEntity::class,
+        UnreadMessageEntity::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 abstract class EthioStatDatabase : RoomDatabase() {
@@ -23,6 +26,9 @@ abstract class EthioStatDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun configDao(): ConfigDao
     abstract fun smsLogDao(): SmsLogDao
+    abstract fun accountSourceDao(): AccountSourceDao
+    abstract fun smsMonitoringConfigDao(): SmsMonitoringConfigDao
+    abstract fun unreadMessageDao(): UnreadMessageDao
     
     companion object {
         @Volatile

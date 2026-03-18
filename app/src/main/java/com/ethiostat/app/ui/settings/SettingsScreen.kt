@@ -3,12 +3,13 @@ package com.ethiostat.app.ui.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyColumn
 import com.ethiostat.app.R
@@ -20,8 +21,11 @@ import com.ethiostat.app.domain.model.ThemeMode
 fun SettingsScreen(
     currentLanguage: AppLanguage,
     currentThemeMode: ThemeMode,
+    showNetBalance: Boolean,
     onLanguageChange: (AppLanguage) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
+    onToggleNetBalanceVisibility: () -> Unit,
+    onNavigateToAccountSources: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     Scaffold(
@@ -51,6 +55,13 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                TransactionSection(
+                    showNetBalance = showNetBalance,
+                    onToggleNetBalance = onToggleNetBalanceVisibility,
+                    onNavigateToAccountSources = onNavigateToAccountSources
+                )
+            }
             item {
                 AppearanceSection(
                     currentThemeMode = currentThemeMode,
@@ -130,7 +141,8 @@ private fun LanguageSection(
             
             val languages = listOf(
                 AppLanguage.ENGLISH to "English",
-                AppLanguage.AMHARIC to "አማርኛ (Amharic)"
+                AppLanguage.AMHARIC to "አማርኛ (Amharic)",
+                AppLanguage.OROMIFFA to "Afaan Oromoo (Oromo)"
             )
             
             languages.forEach { (language, displayName) ->
@@ -153,6 +165,88 @@ private fun LanguageSection(
                         text = displayName,
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(start = 16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun TransactionSection(
+    showNetBalance: Boolean,
+    onToggleNetBalance: () -> Unit,
+    onNavigateToAccountSources: () -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 12.dp)
+            ) {
+                Icon(
+                    Icons.Default.AccountBalance,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Transactions",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Show net balance",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "Display net balance in transaction summary",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = showNetBalance,
+                    onCheckedChange = { onToggleNetBalance() }
+                )
+            }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Transaction sources",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "Manage Telebirr, banks, and other sources",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onNavigateToAccountSources) {
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = "Manage sources"
                     )
                 }
             }

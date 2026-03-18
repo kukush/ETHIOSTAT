@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ethiostat.app.domain.model.Transaction
 import com.ethiostat.app.domain.model.TransactionType
+import com.ethiostat.app.domain.model.AccountSourceType
 
 @Entity(tableName = "transactions")
 data class TransactionEntity(
@@ -13,7 +14,10 @@ data class TransactionEntity(
     val category: String,
     val source: String,
     val description: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val accountSource: String? = null,
+    val sourcePhoneNumber: String? = null,
+    val isClassified: Boolean = false
 )
 
 fun TransactionEntity.toDomain(): Transaction {
@@ -24,7 +28,10 @@ fun TransactionEntity.toDomain(): Transaction {
         category = category,
         source = source,
         description = description,
-        timestamp = timestamp
+        timestamp = timestamp,
+        accountSource = accountSource?.let { AccountSourceType.valueOf(it) },
+        sourcePhoneNumber = sourcePhoneNumber,
+        isClassified = isClassified
     )
 }
 
@@ -36,6 +43,9 @@ fun Transaction.toEntity(): TransactionEntity {
         category = category,
         source = source,
         description = description,
-        timestamp = timestamp
+        timestamp = timestamp,
+        accountSource = accountSource?.name,
+        sourcePhoneNumber = sourcePhoneNumber,
+        isClassified = isClassified
     )
 }

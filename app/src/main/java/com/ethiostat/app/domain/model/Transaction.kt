@@ -7,7 +7,10 @@ data class Transaction(
     val category: String,
     val source: String,
     val description: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val accountSource: AccountSourceType? = null,
+    val sourcePhoneNumber: String? = null,
+    val isClassified: Boolean = false
 )
 
 enum class TransactionType {

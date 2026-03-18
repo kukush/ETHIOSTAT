@@ -9,12 +9,16 @@ import com.ethiostat.app.domain.repository.AppConfig
 import com.ethiostat.app.domain.repository.IEthioStatRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
 class EthioStatRepositoryImpl(
     private val balanceDao: BalanceDao,
     private val transactionDao: TransactionDao,
     private val configDao: ConfigDao,
     private val smsLogDao: SmsLogDao,
+    private val accountSourceDao: AccountSourceDao,
+    private val smsMonitoringConfigDao: SmsMonitoringConfigDao,
+    private val unreadMessageDao: UnreadMessageDao,
     private val smsParser: MultilingualSmsParser
 ) : IEthioStatRepository {
     
@@ -68,25 +72,38 @@ class EthioStatRepositoryImpl(
         val config = getConfigOnce() ?: initializeDefaultConfig()
         
         if (!shouldProcessSms(sender, timestamp, config)) {
+            android.util.Log.d("EthioStat", "processSms: sender=$sender skipped by allowlist")
             return ParsedSmsData.empty()
         }
         
         val parsedData = try {
-            smsParser.parse(body, sender)
+            val result = smsParser.parse(body, sender)
+            android.util.Log.d(
+                "EthioStat",
+                "processSms: sender=$sender parsed=${result.isParsed} packages=${result.packages.size} txn=${result.transaction != null}"
+            )
+            result
         } catch (e: Exception) {
             logSms(sender, body, timestamp, false, e.message)
             return ParsedSmsData.error("Parse error: ${e.message}")
         }
         
         if (parsedData.isParsed) {
-            // Delete old balances of same type+source before inserting fresh data
-            parsedData.packages.forEach { pkg ->
-                balanceDao.deleteByTypeAndSource(pkg.packageType.name, pkg.source)
+            // Delete ALL old balances of same type before inserting fresh combined data
+            // This ensures old packages with different sources are removed
+            val typesToDelete = parsedData.packages.map { it.packageType }.distinct()
+            typesToDelete.forEach { type ->
+                android.util.Log.d("EthioStat", "Deleting ALL old balances for type=${type}")
+                balanceDao.deleteByType(type.name)
             }
-            parsedData.packages.forEach { insertBalance(it) }
+            parsedData.packages.forEach { pkg ->
+                android.util.Log.d("EthioStat", "Inserting balance pkg type=${pkg.packageType} name=${pkg.packageName} rem=${pkg.remainingAmount} total=${pkg.totalAmount} exp=${pkg.expiryDate}")
+                insertBalance(pkg)
+            }
             parsedData.transaction?.let { txn ->
                 val isDuplicate = transactionDao.countBySourceAndTimestamp(txn.source, timestamp) > 0
                 if (!isDuplicate) {
+                    android.util.Log.d("EthioStat", "Inserting transaction amount=${txn.amount} type=${txn.type} source=${txn.source}")
                     insertTransaction(txn.copy(timestamp = timestamp))
                 }
             }
@@ -116,14 +133,17 @@ class EthioStatRepositoryImpl(
         val telecomSenders = config.telecomSenders.split(",").map { it.trim() }
         val telebirrSenders = config.telebirrSenders.split(",").map { it.trim() }
         val bankSenders = config.bankSenders.split(",").map { it.trim() }
+        val fallbackTelecomSenders = listOf("ethio", "ethio telecom", "telecom", "939", "999")
         
         val allSenders = telecomSenders + telebirrSenders + bankSenders
-        val allowed = allSenders.any { configSender ->
+        val allowedConfig = allSenders.any { configSender ->
             val normalized = configSender.replace("*", "").trim()
             normalized.isNotEmpty() && (sender.contains(normalized, ignoreCase = true) || normalized.contains(sender, ignoreCase = true))
         }
+        val allowedFallback = fallbackTelecomSenders.any { sender.contains(it, ignoreCase = true) }
+        val allowed = allowedConfig || allowedFallback
         
-        android.util.Log.d("EthioStat", "shouldProcessSms: sender=$sender allowed=$allowed")
+        android.util.Log.d("EthioStat", "shouldProcessSms: sender=$sender allowed=$allowed (config=$allowedConfig fallback=$allowedFallback)")
         return allowed
     }
     
@@ -160,5 +180,86 @@ class EthioStatRepositoryImpl(
     
     override suspend fun getLatestMessageBySender(sender: String): SmsLogEntity? {
         return smsLogDao.getLatestMessageBySender(sender)
+    }
+    
+    // Account Source Management Implementation
+    override fun getAccountSources(): Flow<List<AccountSource>> {
+        return accountSourceDao.getAllAccountSources().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+    
+    override fun getEnabledAccountSources(): Flow<List<AccountSource>> {
+        return accountSourceDao.getEnabledAccountSources().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+    
+    override suspend fun insertAccountSource(accountSource: AccountSource): Long {
+        return accountSourceDao.insertAccountSource(accountSource.toEntity())
+    }
+    
+    override suspend fun updateAccountSource(accountSource: AccountSource) {
+        accountSourceDao.updateAccountSource(accountSource.toEntity())
+    }
+    
+    override suspend fun deleteAccountSource(accountSource: AccountSource) {
+        accountSourceDao.deleteAccountSource(accountSource.toEntity())
+    }
+    
+    override suspend fun toggleAccountSourceEnabled(id: Long, isEnabled: Boolean) {
+        accountSourceDao.updateAccountSourceEnabled(id, isEnabled)
+    }
+    
+    // SMS Monitoring Configuration Implementation
+    override fun getSmsMonitoringConfig(): Flow<SmsMonitoringConfig?> {
+        return smsMonitoringConfigDao.getSmsMonitoringConfig().map { entity ->
+            entity?.toDomain()
+        }
+    }
+    
+    override suspend fun getSmsMonitoringConfigOnce(): SmsMonitoringConfig? {
+        return smsMonitoringConfigDao.getSmsMonitoringConfigOnce()?.toDomain()
+    }
+    
+    override suspend fun updateSmsMonitoringConfig(config: SmsMonitoringConfig) {
+        smsMonitoringConfigDao.updateSmsMonitoringConfig(config.toEntity())
+    }
+    
+    override suspend fun updateShowNetBalance(showNetBalance: Boolean) {
+        // TODO: Implement show net balance update
+    }
+    
+    // Unread Messages Implementation
+    override fun getUnreadMessages(): Flow<List<UnreadMessage>> {
+        return unreadMessageDao.getUnreadMessages().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+    
+    override fun getUnreadMessageCount(): Flow<UnreadMessageCount> {
+        return combine(
+            unreadMessageDao.getUnreadCount(),
+            unreadMessageDao.getHighPriorityUnreadCount(),
+            unreadMessageDao.getUrgentUnreadCount()
+        ) { total: Int, highPriority: Int, urgent: Int ->
+            UnreadMessageCount(
+                totalCount = total,
+                highPriorityCount = highPriority,
+                urgentCount = urgent
+            )
+        }
+    }
+    
+    override suspend fun markMessageAsRead(messageId: Long) {
+        unreadMessageDao.markAsRead(messageId)
+    }
+    
+    override suspend fun markAllMessagesAsRead() {
+        unreadMessageDao.markAllAsRead()
+    }
+    
+    override suspend fun insertUnreadMessage(message: UnreadMessage): Long {
+        return unreadMessageDao.insertMessage(message.toEntity())
     }
 }

@@ -1,6 +1,7 @@
 package com.ethiostat.app.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,6 +17,7 @@ import com.ethiostat.app.data.local.EthioStatDatabase
 import com.ethiostat.app.data.parser.AmharicSmsParser
 import com.ethiostat.app.data.parser.EnglishSmsParser
 import com.ethiostat.app.data.parser.MultilingualSmsParser
+import com.ethiostat.app.data.parser.OromoSmsParser
 import com.ethiostat.app.data.parser.SmsLanguageDetector
 import com.ethiostat.app.data.repository.EthioStatRepositoryImpl
 import com.ethiostat.app.domain.repository.IEthioStatRepository
@@ -30,11 +32,13 @@ import kotlinx.coroutines.launch
 import android.content.Context
 import android.content.res.Configuration
 import com.ethiostat.app.domain.model.AppLanguage
+import com.ethiostat.app.domain.model.SmsMonitoringConfig
 import com.ethiostat.app.domain.model.ThemeMode
 import java.util.Locale
 import com.ethiostat.app.ui.dashboard.DashboardIntent
 import com.ethiostat.app.ui.dashboard.DashboardScreen
 import com.ethiostat.app.ui.dashboard.DashboardViewModel
+import com.ethiostat.app.ui.settings.AccountSourcesScreen
 import com.ethiostat.app.ui.settings.SettingsIntent
 import com.ethiostat.app.ui.settings.SettingsScreen
 import com.ethiostat.app.ui.settings.SettingsViewModel
@@ -71,10 +75,14 @@ class MainActivity : ComponentActivity() {
             transactionDao = database.transactionDao(),
             configDao = database.configDao(),
             smsLogDao = database.smsLogDao(),
+            accountSourceDao = database.accountSourceDao(),
+            smsMonitoringConfigDao = database.smsMonitoringConfigDao(),
+            unreadMessageDao = database.unreadMessageDao(),
             smsParser = MultilingualSmsParser(
                 languageDetector = SmsLanguageDetector(),
                 englishParser = EnglishSmsParser(),
-                amharicParser = AmharicSmsParser()
+                amharicParser = AmharicSmsParser(),
+                oromoParser = OromoSmsParser()
             )
         )
         
@@ -88,6 +96,8 @@ class MainActivity : ComponentActivity() {
         // Start auto-sync if permissions are already granted
         if (hasAllPermissions()) {
             startAutoSync(repository)
+            // Start SMS monitoring service to listen for new messages
+            startSmsMonitoringService()
         }
         
         val prefs = getSharedPreferences("ethiostat_prefs", Context.MODE_PRIVATE)
@@ -116,6 +126,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val dashboardState by viewModel.state.collectAsState()
                     var showSettings by remember { mutableStateOf(false) }
+                    var showAccountSources by remember { mutableStateOf(false) }
 
                     // Apply locale and force full UI recomposition when language changes
                     LaunchedEffect(dashboardState.currentLanguage) {
@@ -123,24 +134,56 @@ class MainActivity : ComponentActivity() {
                     }
 
                     key(dashboardState.currentLanguage) {
-                        if (showSettings) {
-                            SettingsScreen(
-                                currentLanguage = dashboardState.currentLanguage,
-                                currentThemeMode = settingsState.currentThemeMode,
-                                onLanguageChange = { language ->
-                                    viewModel.processIntent(DashboardIntent.ChangeLanguage(language))
-                                    settingsViewModel.setCurrentLanguage(language)
-                                },
-                                onThemeModeChange = { mode ->
-                                    settingsViewModel.processIntent(SettingsIntent.ChangeThemeMode(mode))
-                                },
-                                onNavigateBack = { showSettings = false }
-                            )
-                        } else {
-                            DashboardScreen(
-                                viewModel = viewModel,
-                                onNavigateToSettings = { showSettings = true }
-                            )
+                        when {
+                            showAccountSources -> {
+                                AccountSourcesScreen(
+                                    accountSources = dashboardState.accountSources,
+                                    onAddSource = { source ->
+                                        viewModel.processIntent(DashboardIntent.AddAccountSource(source))
+                                    },
+                                    onEditSource = { source ->
+                                        viewModel.processIntent(DashboardIntent.EditAccountSource(source))
+                                    },
+                                    onDeleteSource = { source ->
+                                        viewModel.processIntent(DashboardIntent.DeleteAccountSource(source))
+                                    },
+                                    onToggleSource = { source ->
+                                        viewModel.processIntent(DashboardIntent.ToggleAccountSource(source))
+                                    },
+                                    onNavigateBack = { 
+                                        showAccountSources = false
+                                        showSettings = true
+                                    }
+                                )
+                            }
+                            showSettings -> {
+                                SettingsScreen(
+                                    currentLanguage = dashboardState.currentLanguage,
+                                    currentThemeMode = settingsState.currentThemeMode,
+                                    showNetBalance = dashboardState.showNetBalance,
+                                    onLanguageChange = { language ->
+                                        viewModel.processIntent(DashboardIntent.ChangeLanguage(language))
+                                        settingsViewModel.setCurrentLanguage(language)
+                                    },
+                                    onThemeModeChange = { mode ->
+                                        settingsViewModel.processIntent(SettingsIntent.ChangeThemeMode(mode))
+                                    },
+                                    onToggleNetBalanceVisibility = { 
+                                        viewModel.processIntent(DashboardIntent.ToggleNetBalanceVisibility)
+                                    },
+                                    onNavigateToAccountSources = { 
+                                        showSettings = false
+                                        showAccountSources = true
+                                    },
+                                    onNavigateBack = { showSettings = false }
+                                )
+                            }
+                            else -> {
+                                DashboardScreen(
+                                    viewModel = viewModel,
+                                    onNavigateToSettings = { showSettings = true }
+                                )
+                            }
                         }
                     }
                 }
@@ -213,16 +256,39 @@ class MainActivity : ComponentActivity() {
             transactionDao = database.transactionDao(),
             configDao = database.configDao(),
             smsLogDao = database.smsLogDao(),
+            accountSourceDao = database.accountSourceDao(),
+            smsMonitoringConfigDao = database.smsMonitoringConfigDao(),
+            unreadMessageDao = database.unreadMessageDao(),
             smsParser = MultilingualSmsParser(
                 languageDetector = SmsLanguageDetector(),
                 englishParser = EnglishSmsParser(),
-                amharicParser = AmharicSmsParser()
+                amharicParser = AmharicSmsParser(),
+                oromoParser = OromoSmsParser()
             )
         )
+    }
+    
+    private fun startSmsMonitoringService() {
+        try {
+            val intent = Intent(this, com.ethiostat.app.service.SmsMonitoringService::class.java).apply {
+                action = com.ethiostat.app.service.SmsMonitoringService.ACTION_START_MONITORING
+            }
+            startService(intent)
+            android.util.Log.d("EthioStat", "SMS Monitoring Service started")
+        } catch (e: Exception) {
+            android.util.Log.e("EthioStat", "Failed to start SMS Monitoring Service: ${e.message}")
+        }
     }
     
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
+        // Stop SMS monitoring service
+        try {
+            val intent = Intent(this, com.ethiostat.app.service.SmsMonitoringService::class.java)
+            stopService(intent)
+        } catch (e: Exception) {
+            android.util.Log.e("EthioStat", "Failed to stop SMS Monitoring Service: ${e.message}")
+        }
     }
 }

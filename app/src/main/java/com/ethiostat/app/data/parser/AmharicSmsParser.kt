@@ -26,7 +26,15 @@ class AmharicSmsParser : SmsParser {
     
     override fun parse(smsBody: String, sender: String): ParsedSmsData {
         android.util.Log.d("EthioStat", "AmharicSmsParser parsing SMS from $sender")
-        val transaction = parseTransaction(smsBody, sender) ?: parseTelebirrTransaction(smsBody, sender)
+        
+        // CRITICAL: Telecom sender (251994) should NEVER create transactions, only packages
+        val transaction = if (sender.contains("251994", ignoreCase = true) || 
+                              sender.contains("ethio telecom", ignoreCase = true)) {
+            null
+        } else {
+            parseTransaction(smsBody, sender) ?: parseTelebirrTransaction(smsBody, sender)
+        }
+        
         val packages = parseTeleCoinReward(smsBody)
         
         if (transaction != null) {

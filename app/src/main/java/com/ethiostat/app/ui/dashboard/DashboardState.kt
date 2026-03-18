@@ -1,6 +1,7 @@
 package com.ethiostat.app.ui.dashboard
 
 import com.ethiostat.app.domain.model.*
+import com.ethiostat.app.domain.usecase.TransactionSummary
 
 data class DashboardState(
     val balances: List<BalancePackage> = BalancePackageFactory.createDefaultZeroBalances(),
@@ -8,10 +9,17 @@ data class DashboardState(
     val financialSummary: FinancialSummary = FinancialSummary(),
     val currentLanguage: AppLanguage = AppLanguage.ENGLISH,
     val selectedPeriod: TimePeriod = TimePeriod.WEEKLY,
+    val selectedSourceFilter: AccountSourceType? = null,
+    val showNetBalance: Boolean = true,
+    val isSmsMonitoringActive: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
     val syncSuccess: Boolean = false,
-    val hasRealData: Boolean = false
+    val hasRealData: Boolean = false,
+    val transactionSummaryBySource: Map<AccountSourceType, TransactionSummary> = emptyMap(),
+    val accountSources: List<AccountSource> = emptyList(),
+    val unreadMessageCount: UnreadMessageCount = UnreadMessageCount(0, 0, 0),
+    val unreadMessages: List<UnreadMessage> = emptyList()
 ) {
     val internetPackages: List<BalancePackage>
         get() = balances.filter { it.packageType == PackageType.INTERNET }

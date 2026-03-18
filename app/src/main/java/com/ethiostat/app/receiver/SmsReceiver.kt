@@ -9,6 +9,7 @@ import com.ethiostat.app.data.local.EthioStatDatabase
 import com.ethiostat.app.data.parser.AmharicSmsParser
 import com.ethiostat.app.data.parser.EnglishSmsParser
 import com.ethiostat.app.data.parser.MultilingualSmsParser
+import com.ethiostat.app.data.parser.OromoSmsParser
 import com.ethiostat.app.data.parser.SmsLanguageDetector
 import com.ethiostat.app.data.repository.EthioStatRepositoryImpl
 import kotlinx.coroutines.CoroutineScope
@@ -28,16 +29,23 @@ class SmsReceiver : BroadcastReceiver() {
         
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         
-        for (smsMessage in messages) {
-            processSmsMessage(context, smsMessage)
+        // Concatenate multi-part SMS messages
+        if (messages.isNotEmpty()) {
+            val sender = messages[0].originatingAddress ?: return
+            val timestamp = messages[0].timestampMillis
+            
+            android.util.Log.d("EthioStat", "SmsReceiver: Received ${messages.size} message parts from $sender")
+            
+            val fullBody = messages.joinToString("") { it.messageBody ?: "" }
+            
+            android.util.Log.d("EthioStat", "SmsReceiver: Concatenated body length: ${fullBody.length}")
+            android.util.Log.d("EthioStat", "SmsReceiver: Full body: ${fullBody.take(500)}")
+            
+            processSmsMessage(context, sender, fullBody, timestamp)
         }
     }
     
-    private fun processSmsMessage(context: Context, smsMessage: SmsMessage) {
-        val sender = smsMessage.originatingAddress ?: return
-        val body = smsMessage.messageBody ?: return
-        val timestamp = smsMessage.timestampMillis
-        
+    private fun processSmsMessage(context: Context, sender: String, body: String, timestamp: Long) {
         scope.launch {
             try {
                 val database = EthioStatDatabase.getDatabase(context)
@@ -46,14 +54,26 @@ class SmsReceiver : BroadcastReceiver() {
                     transactionDao = database.transactionDao(),
                     configDao = database.configDao(),
                     smsLogDao = database.smsLogDao(),
+                    accountSourceDao = database.accountSourceDao(),
+                    smsMonitoringConfigDao = database.smsMonitoringConfigDao(),
+                    unreadMessageDao = database.unreadMessageDao(),
                     smsParser = MultilingualSmsParser(
                         languageDetector = SmsLanguageDetector(),
                         englishParser = EnglishSmsParser(),
-                        amharicParser = AmharicSmsParser()
+                        amharicParser = AmharicSmsParser(),
+                        oromoParser = OromoSmsParser()
                     )
                 )
                 
                 repository.processSms(sender, body, timestamp)
+                
+                // Broadcast update to refresh UI for both telecom and transaction data
+                val updateIntent = Intent("com.ethiostat.app.SMS_PROCESSED").apply {
+                    putExtra("sender", sender)
+                    putExtra("timestamp", timestamp)
+                }
+                context.sendBroadcast(updateIntent)
+                android.util.Log.d("EthioStat", "Broadcast SMS_PROCESSED for sender: $sender")
             } catch (e: Exception) {
                 e.printStackTrace()
             }

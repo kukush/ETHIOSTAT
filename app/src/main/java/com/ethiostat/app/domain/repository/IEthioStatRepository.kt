@@ -33,6 +33,39 @@ interface IEthioStatRepository {
     suspend fun getStoredMessagesBySenderSince(sender: String, fromTimestamp: Long): List<SmsLogEntity>
     
     suspend fun getLatestMessageBySender(sender: String): SmsLogEntity?
+    
+    // Account Source Management
+    fun getAccountSources(): Flow<List<AccountSource>>
+    
+    fun getEnabledAccountSources(): Flow<List<AccountSource>>
+    
+    suspend fun insertAccountSource(accountSource: AccountSource): Long
+    
+    suspend fun updateAccountSource(accountSource: AccountSource)
+    
+    suspend fun deleteAccountSource(accountSource: AccountSource)
+    
+    suspend fun toggleAccountSourceEnabled(id: Long, isEnabled: Boolean)
+    
+    // SMS Monitoring Configuration
+    fun getSmsMonitoringConfig(): Flow<SmsMonitoringConfig?>
+    
+    suspend fun getSmsMonitoringConfigOnce(): SmsMonitoringConfig?
+    
+    suspend fun updateSmsMonitoringConfig(config: SmsMonitoringConfig)
+    
+    suspend fun updateShowNetBalance(showNetBalance: Boolean)
+    
+    // Unread Messages
+    fun getUnreadMessages(): Flow<List<UnreadMessage>>
+    
+    fun getUnreadMessageCount(): Flow<UnreadMessageCount>
+    
+    suspend fun markMessageAsRead(messageId: Long)
+    
+    suspend fun markAllMessagesAsRead()
+    
+    suspend fun insertUnreadMessage(message: UnreadMessage): Long
 }
 
 data class AppConfig(

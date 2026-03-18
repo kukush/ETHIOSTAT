@@ -10,7 +10,11 @@ import androidx.core.content.ContextCompat
 class SyncBalanceUseCase(
     private val context: Context
 ) {
-    operator fun invoke(ussdCode: String): Result<Unit> {
+    companion object {
+        private const val TELECOM_USSD_CODE = "*804#"
+    }
+    
+    operator fun invoke(ussdCode: String = TELECOM_USSD_CODE): Result<Unit> {
         return try {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) 
                 != PackageManager.PERMISSION_GRANTED) {
@@ -28,5 +32,10 @@ class SyncBalanceUseCase(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+    
+    // Specific method for telecom service data refresh
+    fun refreshTelecomData(): Result<Unit> {
+        return invoke(TELECOM_USSD_CODE)
     }
 }

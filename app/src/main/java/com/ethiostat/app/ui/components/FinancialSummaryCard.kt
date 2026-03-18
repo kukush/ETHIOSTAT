@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.ethiostat.app.R
 import com.ethiostat.app.domain.model.FinancialSummary
 import com.ethiostat.app.domain.model.TimePeriod
+import com.ethiostat.app.domain.model.AccountSourceType
 import com.ethiostat.app.ui.theme.ErrorRed
 import com.ethiostat.app.ui.theme.SuccessGreen
 
@@ -23,7 +26,11 @@ import com.ethiostat.app.ui.theme.SuccessGreen
 fun FinancialSummaryCard(
     summary: FinancialSummary,
     selectedPeriod: TimePeriod = TimePeriod.WEEKLY,
+    selectedSourceFilter: AccountSourceType? = null,
+    showNetBalance: Boolean = true,
     onPeriodChange: (TimePeriod) -> Unit = {},
+    onSourceFilterChange: (AccountSourceType?) -> Unit = {},
+    onToggleNetBalance: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -62,6 +69,29 @@ fun FinancialSummaryCard(
                     FilterChip(
                         selected = selectedPeriod == period,
                         onClick = { onPeriodChange(period) },
+                        label = { Text(label, style = MaterialTheme.typography.labelMedium) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                FilterChip(
+                    selected = selectedSourceFilter == null,
+                    onClick = { onSourceFilterChange(null) },
+                    label = { Text("All", style = MaterialTheme.typography.labelMedium) }
+                )
+                listOf(
+                    AccountSourceType.TELEBIRR to "Telebirr",
+                    AccountSourceType.BANK_CBE to "CBE",
+                    AccountSourceType.BANK_AWASH to "Awash"
+                ).forEach { (sourceType, label) ->
+                    FilterChip(
+                        selected = selectedSourceFilter == sourceType,
+                        onClick = { onSourceFilterChange(sourceType) },
                         label = { Text(label, style = MaterialTheme.typography.labelMedium) }
                     )
                 }
@@ -109,14 +139,35 @@ fun FinancialSummaryCard(
                     fontWeight = FontWeight.Bold
                 )
                 
-                val netColor = if (summary.netBalance >= 0) SuccessGreen else ErrorRed
-                
-                Text(
-                    text = "${if (summary.netBalance >= 0) "+" else ""}%.2f Birr".format(summary.netBalance),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = netColor
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(
+                        onClick = onToggleNetBalance,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (showNetBalance) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (showNetBalance) "Hide net balance" else "Show net balance",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    
+                    val netColor = if (summary.netBalance >= 0) SuccessGreen else ErrorRed
+                    
+                    Text(
+                        text = if (showNetBalance) {
+                            "${if (summary.netBalance >= 0) "+" else ""}%.2f Birr".format(summary.netBalance)
+                        } else {
+                            "••••••"
+                        },
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (showNetBalance) netColor else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

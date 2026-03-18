@@ -52,6 +52,9 @@
     <string name="monthly">Monthly</string>
     <string name="all_time">All Time</string>
     
+    <!-- Accessibility -->
+    <string name="accessibility_service_description">Auto-dismiss USSD dialogs when checking telecom balance. This helps provide a seamless experience when the app automatically checks your internet and voice balance.</string>
+    
     <!-- Appearance -->
     <string name="appearance">Appearance</string>
     <string name="theme_mode">Theme</string>
