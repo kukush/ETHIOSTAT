@@ -134,7 +134,9 @@ class EthioStatRepositoryImpl(
         val telecomSenders = config.telecomSenders.split(",").map { it.trim() }
         val telebirrSenders = config.telebirrSenders.split(",").map { it.trim() }
         val bankSenders = config.bankSenders.split(",").map { it.trim() }
-        val fallbackTelecomSenders = listOf("ethio", "ethio telecom", "telecom", "939", "999")
+        val fallbackTelecomSenders = listOf(
+            "ethio", "ethio telecom", "telecom", "939", "999", "127", "251994", "cbe", "boa", "awash", "awashbank"
+        )
         
         val allSenders = telecomSenders + telebirrSenders + bankSenders
         val allowedConfig = allSenders.any { configSender ->

@@ -1,0 +1,98 @@
+[
+  {
+    "bank": "127",
+    "language": "English",
+    "type": "Debit",
+    "body": "Dear Customer, you have transferred 150.00 Birr to 09XXXXXXXX. Transaction ID: 1A2B3C. Balance: 500.00 Birr."
+  },
+  {
+    "bank": "127",
+    "language": "English",
+    "type": "Credit",
+    "body": "Dear Customer, 350.00 Birr transferred to your account from 09YYYYYYYY. Balance: 850.00 Birr."
+  },
+  {
+    "bank": "127",
+    "language": "Amharic",
+    "type": "Debit",
+    "body": "ለ 0912XXXXXX ብር 200.00 በተሳካ ሁኔታ ልከዋል። የግብይት መታወቂያ: 9F431M2YC5። ቀሪ ሂሳብ: 650.00 ብር።"
+  },
+  {
+    "bank": "127",
+    "language": "Oromiffa",
+    "type": "Credit",
+    "body": "0911XXXXXX irraa Qarshii 500.00 qaqqabeera. ID gurgurtaa: 8E320N1XB4."
+  },
+  {
+    "bank": "CBE",
+    "language": "English",
+    "type": "Debit",
+    "body": "Dear Customer, ETB 1,500.00 has been debited from your account 1000xxxxxx on 15/03/26 14:45. Balance: ETB 14,000.00. Thank you for banking with CBE."
+  },
+  {
+    "bank": "CBE",
+    "language": "English",
+    "type": "Credit",
+    "body": "Dear Customer, your account 1000xxxxxx has been credited with ETB 5,000.00 on 15/03/26 10:30. Balance: ETB 15,500.00. Thank you for banking with CBE."
+  },
+  {
+    "bank": "CBE",
+    "language": "Amharic",
+    "type": "Debit",
+    "body": "ውድ ደንበኛችን፤ ከሂሳብዎ (1000xxxxxx) ላይ ብር 500.00 ወጪ ሆኗል (15/03/26 15:30)። ቀሪ ሂሳብዎ ብር 16,500.00 ነው። ከኢትዮጵያ ንግድ ባንክ ጋር ስለሚሰሩ እናመሰግናለን።"
+  },
+  {
+    "bank": "CBE",
+    "language": "Oromiffa",
+    "type": "Credit",
+    "body": "Maamilaa kabajamoo, herregni keessan 1000xxxxxx guyyaa 15/03/26 10:30 irratti qarshii 5,000.00 akka seene galmeeffameera."
+  },
+  {
+    "bank": "BOA",
+    "language": "English",
+    "type": "Debit",
+    "body": "Dear Customer, your account ...5678 has been debited ETB 200.00. Balance: ETB 800.00."
+  },
+  {
+    "bank": "BOA",
+    "language": "English",
+    "type": "Credit",
+    "body": "Dear Customer, your account ...1234 has been credited ETB 1,000.00. Balance: ETB 1,800.00."
+  },
+  {
+    "bank": "BOA",
+    "language": "Amharic",
+    "type": "Debit",
+    "body": "ውድ ደንበኛችን፤ ከሂሳብዎ (...5678) ላይ ብር 1,000.00 ወጪ ሆኗል።"
+  },
+  {
+    "bank": "BOA",
+    "language": "Oromiffa",
+    "type": "Credit",
+    "body": "Maamila Kabajamoo, Herregni keessan ...1234 qarshii 3,000.00 galii ta'eera."
+  },
+  {
+    "bank": "AWASHBANK",
+    "language": "English",
+    "type": "Debit",
+    "body": "Dear Customer, your account ...9100 has been debited ETB 500.00. Balance: ETB 1,500.00."
+  },
+  {
+    "bank": "AWASHBANK",
+    "language": "English",
+    "type": "Credit",
+    "body": "Dear Customer, your account ...4500 has been credited ETB 2,500.00. Balance: ETB 4,000.00."
+  },
+  {
+    "bank": "AWASHBANK",
+    "language": "Amharic",
+    "type": "Debit",
+    "body": "ውድ ደንበኛችን፤ ከሂሳብዎ (...9100) ላይ ብር 2,000.00 ወጪ ሆኗል።"
+  },
+  {
+    "bank": "AWASHBANK",
+    "language": "Oromiffa",
+    "type": "Debit",
+    "body": "Maamila Kabajamoo, Herregni keessan ...9100 qarshii 2,000.00 baasii ta'eera."
+  }
+]

@@ -23,6 +23,14 @@ class SmsReceiver : BroadcastReceiver() {
     private val scope = CoroutineScope(Dispatchers.IO + job)
     
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == "com.ethiostat.app.DEBUG_SMS") {
+            val sender = intent.getStringExtra("sender") ?: return
+            val body = intent.getStringExtra("body") ?: return
+            android.util.Log.d("EthioStat", "SmsReceiver: Received DEBUG SMS from $sender: $body")
+            processSmsMessage(context, sender, body, System.currentTimeMillis())
+            return
+        }
+
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
             return
         }
