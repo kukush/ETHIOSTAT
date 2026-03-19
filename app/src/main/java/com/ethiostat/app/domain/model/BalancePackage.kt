@@ -91,5 +91,20 @@ data class BalancePackage(
                 language = "en"
             )
         }
+        
+        fun createZeroSms(): BalancePackage {
+            return BalancePackage(
+                packageType = PackageType.SMS,
+                packageName = "SMS Balance",
+                totalAmount = 0.0,
+                remainingAmount = 0.0,
+                unit = "SMS",
+                source = "Ethio Telecom",
+                validityDays = 0,
+                expiryDate = "No data",
+                expiryTimestamp = 0L,
+                language = "en"
+            )
+        }
     }
 }

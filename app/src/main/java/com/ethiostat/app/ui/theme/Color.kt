@@ -6,6 +6,7 @@ val InternetBlue = Color(0xFF2196F3)
 val VoiceGreen = Color(0xFF4CAF50)
 val FundsAmber = Color(0xFFFFC107)
 val PromotionPurple = Color(0xFF7B1FA2)
+val SmsTeal = Color(0xFF00BFA5)
 val GoldAccent = Color(0xFFFFB300)
 val BrandBlue = Color(0xFF1565C0)
 

@@ -14,6 +14,7 @@
     <string name="bonus_funds">Bonus Funds</string>
     <string name="night_bonus">Night Bonus</string>
     <string name="promotion">Promotion</string>
+    <string name="sms_balance">SMS Balance</string>
     <string name="telecom_service">Telecom Service</string>
     
     <!-- Actions -->

@@ -31,7 +31,7 @@ import com.ethiostat.app.ui.components.UnreadMessageIndicator
 import com.ethiostat.app.ui.settings.AccountSourcesScreen
 import com.ethiostat.app.ui.theme.FundsAmber
 import com.ethiostat.app.ui.theme.InternetBlue
-import com.ethiostat.app.ui.theme.PromotionPurple
+import com.ethiostat.app.ui.theme.SmsTeal
 import com.ethiostat.app.ui.theme.VoiceGreen
 
 @Composable
@@ -155,7 +155,8 @@ private fun BalanceList(
             TelecomServiceSection(
                 internetPackages = state.internetPackages,
                 voicePackages = state.voicePackages,
-                bonusFunds = state.bonusFunds
+                bonusFunds = state.bonusFunds,
+                smsPackages = state.smsPackages
             )
         }
 
@@ -203,7 +204,8 @@ private fun BalanceList(
 private fun TelecomServiceSection(
     internetPackages: List<BalancePackage>,
     voicePackages: List<BalancePackage>,
-    bonusFunds: List<BalancePackage>
+    bonusFunds: List<BalancePackage>,
+    smsPackages: List<BalancePackage>
 ) {
     var isExpanded by androidx.compose.runtime.remember { mutableStateOf(true) }
     
@@ -211,8 +213,7 @@ private fun TelecomServiceSection(
     val voicePkg = voicePackages.firstOrNull() ?: BalancePackage.createZeroVoice()
     val bonusPkg = bonusFunds.filter { !it.unit.equals("coins", ignoreCase = true) }.firstOrNull()
         ?: BalancePackage.createZeroBonus()
-    val promoPkg = bonusFunds.filter { it.unit.equals("coins", ignoreCase = true) }.firstOrNull()
-        ?: BalancePackage.createZeroPromotion()
+    val smsPkg = smsPackages.firstOrNull() ?: BalancePackage.createZeroSms()
 
     Card(
         modifier = Modifier
@@ -300,13 +301,12 @@ private fun TelecomServiceSection(
                         modifier = Modifier.weight(1f)
                     )
                     SummaryTab(
-                        label = stringResource(R.string.promotion),
-                        value = if (promoPkg.unit.equals("coins", ignoreCase = true)) "${promoPkg.remainingAmount.toInt()} Coins"
-                            else "%.0f Br".format(promoPkg.remainingAmount),
-                        subValue = "",
-                        progress = if (promoPkg.totalAmount > 0) (promoPkg.remainingAmount / promoPkg.totalAmount).toFloat().coerceIn(0f, 1f) else 1f,
-                        expiryText = packageExpiryLabel(promoPkg),
-                        color = PromotionPurple,
+                        label = stringResource(R.string.sms_balance),
+                        value = "${smsPkg.remainingAmount.toInt()} SMS",
+                        subValue = if (smsPkg.totalAmount > 0) "/ ${smsPkg.totalAmount.toInt()} SMS" else "",
+                        progress = if (smsPkg.totalAmount > 0) (smsPkg.remainingAmount / smsPkg.totalAmount).toFloat().coerceIn(0f, 1f) else 1f,
+                        expiryText = packageExpiryLabel(smsPkg),
+                        color = SmsTeal,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -396,7 +396,8 @@ private fun ZeroBalanceState(state: DashboardState) {
             TelecomServiceSection(
                 internetPackages = state.internetPackages,
                 voicePackages = state.voicePackages,
-                bonusFunds = state.bonusFunds
+                bonusFunds = state.bonusFunds,
+                smsPackages = state.smsPackages
             )
         }
 

@@ -3,179 +3,160 @@ package com.ethiostat.app.data.parser
 import com.ethiostat.app.domain.model.*
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.regex.Pattern
 
 class AmharicSmsParser : SmsParser {
-    
-    private val transactionPattern = Regex("""በቴሌብር\s+ስላደረጉት\s+የገንዘብ\s+ዝውውር""")
-    
-    private val telebirrPaymentPattern = Regex("""telebirr\s+payment.*?(\d+\.?\d*)\s+birr""", RegexOption.IGNORE_CASE)
-    
-    private val telebirrTransferPattern = Regex("""You\s+have\s+received\s+(\d+\.?\d*)\s+birr.*?from.*?telebirr""", RegexOption.IGNORE_CASE)
-    
-    private val telebirrBalancePattern = Regex("""Your\s+telebirr\s+balance\s+is\s+(\d+\.?\d*)\s+birr""", RegexOption.IGNORE_CASE)
-    
-    private val ussdCodePattern = Regex("""ወደ\s+(\*\d+\*\d+#)\s+በመደወል""")
-    
-    private val prizePattern = Regex("""([\d,]+)\s+ብር""")
-    
-    private val expiryDatePattern = Regex("""በ(\d{2})/(\d{2})/(\d{4})\s*ነው""")
-    
-    private val teleCoinPattern = Regex("""የቴሌብር\s+ግብይቶ\s+(\d+)\s+ነፃ\s+የቴሌኮይን\s+አስገኝቶሎታል""")
-    
-    private val serviceExpiryPattern = Regex("""የአገልግሎት\s+ማብቅያ\s+ጊዜ\s+በ(\d{2}/\d{2}/\d{4})\s+ነው""")
-    
+
+    override fun canParse(smsBody: String): Boolean {
+        val amharicCharRegex = Regex("""[\u1200-\u137F]""")
+        // Consider it parsable if it contains Amharic script
+        return amharicCharRegex.containsMatchIn(smsBody)
+    }
+
     override fun parse(smsBody: String, sender: String): ParsedSmsData {
-        android.util.Log.d("EthioStat", "AmharicSmsParser parsing SMS from $sender")
-        
-        // CRITICAL: Telecom sender (251994) should NEVER create transactions, only packages
+        // Skip telecom sender regarding bank transactions
         val transaction = if (sender.contains("251994", ignoreCase = true) || 
                               sender.contains("ethio telecom", ignoreCase = true)) {
             null
         } else {
-            parseTransaction(smsBody, sender) ?: parseTelebirrTransaction(smsBody, sender)
+            parseTransactionForSender(smsBody, sender)
         }
-        
-        val packages = parseTeleCoinReward(smsBody)
-        
-        if (transaction != null) {
-            android.util.Log.d("EthioStat", "Found telebirr transaction: ${transaction.amount} ${transaction.category}")
-        }
-        
-        return if (transaction != null || packages.isNotEmpty()) {
+
+        // Packages parsing could go here, omitting for simplicity since we mostly need financial
+        // But keeping it compatible if needed
+        val packages = emptyList<BalancePackage>()
+
+        return if (transaction != null) {
             ParsedSmsData.success(
                 packages = packages,
                 transaction = transaction,
                 language = SmsLanguage.AMHARIC
             )
         } else {
-            android.util.Log.d("EthioStat", "No telebirr transaction found in SMS")
             ParsedSmsData.empty()
         }
     }
-    
-    override fun canParse(smsBody: String): Boolean {
-        return transactionPattern.containsMatchIn(smsBody) ||
-                teleCoinPattern.containsMatchIn(smsBody) ||
-                telebirrPaymentPattern.containsMatchIn(smsBody) ||
-                telebirrTransferPattern.containsMatchIn(smsBody) ||
-                telebirrBalancePattern.containsMatchIn(smsBody)
+
+    private fun parseTransactionForSender(smsBody: String, sender: String): Transaction? {
+        val uppercaseSender = sender.uppercase()
+        return when {
+            uppercaseSender.contains("CBE") -> parseCbeTransaction(smsBody, sender)
+            uppercaseSender.contains("BOA") || uppercaseSender.contains("ABYSSINIA") -> parseBoaTransaction(smsBody, sender)
+            uppercaseSender.contains("AWASH") -> parseAwashTransaction(smsBody, sender)
+            uppercaseSender.contains("830") || uppercaseSender.contains("127") -> parseTelebirrTransaction(smsBody, sender)
+            else -> parseGenericTransaction(smsBody, sender)
+        }
     }
-    
-    private fun parseTransaction(smsBody: String, sender: String): Transaction? {
-        if (!transactionPattern.containsMatchIn(smsBody)) {
-            return null
+
+    private fun parseCbeTransaction(smsBody: String, sender: String): Transaction? {
+        // CBE Amharic Credit: በብር 5,000.00 ተመዝግቧል
+        val creditPattern = Regex("""በብር\s*([\d,]+\.?\d*)\s*ተመዝግቧል""")
+        val creditMatch = creditPattern.find(smsBody)
+        if (creditMatch != null) {
+            val amount = creditMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+            return createTransaction(amount, TransactionType.INCOME, "CBE Credit (Amharic)", sender, AccountSourceType.BANK_CBE)
         }
-        
-        val ussdCode = ussdCodePattern.find(smsBody)?.groupValues?.get(1)
-        
-        val prizes = prizePattern.findAll(smsBody)
-            .map { it.groupValues[1].replace(",", "").toDoubleOrNull() ?: 0.0 }
-            .toList()
-        
-        val totalPrize = prizes.firstOrNull() ?: 0.0
-        
-        return Transaction(
-            amount = totalPrize,
-            type = TransactionType.EXPENSE,
-            category = "telebirr Transaction",
-            source = sender,
-            description = "የቴሌብር የገንዘብ ዝውውር - $ussdCode",
-            timestamp = System.currentTimeMillis()
-        )
-    }
-    
-    private fun parseTelebirrTransaction(smsBody: String, sender: String): Transaction? {
-        // Check for telebirr payment
-        telebirrPaymentPattern.find(smsBody)?.let { match ->
-            val amount = match.groupValues[1].toDoubleOrNull() ?: 0.0
-            return Transaction(
-                amount = amount,
-                type = TransactionType.EXPENSE,
-                category = "telebirr Payment",
-                source = sender,
-                description = "telebirr payment transaction",
-                timestamp = System.currentTimeMillis()
-            )
+
+        // CBE Amharic Debit: በብር 1,000.00 ተቀንሷል
+        val debitPattern = Regex("""በብር\s*([\d,]+\.?\d*)\s*ተቀንሷል""")
+        val debitMatch = debitPattern.find(smsBody)
+        if (debitMatch != null) {
+            val amount = debitMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+            return createTransaction(amount, TransactionType.EXPENSE, "CBE Debit (Amharic)", sender, AccountSourceType.BANK_CBE)
         }
-        
-        // Check for telebirr transfer received
-        telebirrTransferPattern.find(smsBody)?.let { match ->
-            val amount = match.groupValues[1].toDoubleOrNull() ?: 0.0
-            return Transaction(
-                amount = amount,
-                type = TransactionType.INCOME,
-                category = "telebirr Transfer",
-                source = sender,
-                description = "telebirr money received",
-                timestamp = System.currentTimeMillis()
-            )
-        }
-        
-        // Check for telebirr balance update
-        telebirrBalancePattern.find(smsBody)?.let { match ->
-            val balance = match.groupValues[1].toDoubleOrNull() ?: 0.0
-            return Transaction(
-                amount = balance,
-                type = TransactionType.INCOME,
-                category = "telebirr Balance",
-                source = sender,
-                description = "telebirr balance check",
-                timestamp = System.currentTimeMillis()
-            )
-        }
-        
         return null
     }
-    
-    private fun parseTeleCoinReward(smsBody: String): List<BalancePackage> {
-        val teleCoinMatch = teleCoinPattern.find(smsBody) ?: return emptyList()
-        val expiryMatch = serviceExpiryPattern.find(smsBody)
-        
-        val coins = teleCoinMatch.groupValues[1].toIntOrNull() ?: 0
-        val expiryDate = expiryMatch?.groupValues?.get(1)?.let { 
-            convertAmharicDate(it) 
-        } ?: ""
-        
-        val expiryTimestamp = parseExpiryTimestamp(expiryDate)
-        
-        return if (coins > 0) {
-            listOf(
-                BalancePackage(
-                    packageType = PackageType.BONUS_FUND,
-                    packageName = "TeleCoin Reward",
-                    totalAmount = coins.toDouble(),
-                    remainingAmount = coins.toDouble(),
-                    unit = "Coins",
-                    source = "telebirr",
-                    validityDays = calculateDaysUntil(expiryTimestamp),
-                    expiryDate = expiryDate,
-                    expiryTimestamp = expiryTimestamp,
-                    language = "am"
-                )
+
+    private fun parseBoaTransaction(smsBody: String, sender: String): Transaction? {
+        // BOA Amharic Credit: ብር 5,000.00 ተቀማጭ ተደርጓል
+        val creditPattern = Regex("""ብር\s*([\d,]+\.?\d*)\s*ተቀማጭ""")
+        val creditMatch = creditPattern.find(smsBody)
+        if (creditMatch != null) {
+            val amount = creditMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+            return createTransaction(amount, TransactionType.INCOME, "BOA Credit (Amharic)", sender, AccountSourceType.BANK_BOA)
+        }
+
+        // BOA Amharic Debit: ብር 1,000.00 ወጪ ተደርጓል
+        val debitPattern = Regex("""ብር\s*([\d,]+\.?\d*)\s*ወጪ""")
+        val debitMatch = debitPattern.find(smsBody)
+        if (debitMatch != null) {
+            val amount = debitMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+            return createTransaction(amount, TransactionType.EXPENSE, "BOA Debit (Amharic)", sender, AccountSourceType.BANK_BOA)
+        }
+        return null
+    }
+
+    private fun parseAwashTransaction(smsBody: String, sender: String): Transaction? {
+        // Awash Amharic Credit: በ 5,000.00 ብር ገቢ ሆኗል
+        val creditPattern = Regex("""(?:በ\s*)?([\d,]+\.?\d*)\s*ብር\s*ገቢ""")
+        val creditMatch = creditPattern.find(smsBody)
+        if (creditMatch != null) {
+            val amount = creditMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+            return createTransaction(amount, TransactionType.INCOME, "Awash Credit (Amharic)", sender, AccountSourceType.BANK_AWASH)
+        }
+
+        // Awash Amharic Debit: በ 2,000.00 ብር ወጪ ሆኗል
+        val debitPattern = Regex("""(?:በ\s*)?([\d,]+\.?\d*)\s*ብር\s*ወጪ""")
+        val debitMatch = debitPattern.find(smsBody)
+        if (debitMatch != null) {
+            val amount = debitMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+            return createTransaction(amount, TransactionType.EXPENSE, "Awash Debit (Amharic)", sender, AccountSourceType.BANK_AWASH)
+        }
+        return null
+    }
+
+    private fun parseTelebirrTransaction(smsBody: String, sender: String): Transaction? {
+        // Telebirr Amharic Credit: ብር 500.00 ደርሶዎታል
+        val creditPattern = Regex("""ብር\s*([\d,]+\.?\d*)\s*ደርሶዎታል""")
+        val creditMatch = creditPattern.find(smsBody)
+        if (creditMatch != null) {
+            val amount = creditMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+            return createTransaction(amount, TransactionType.INCOME, "TeleBirr Receive (Amharic)", sender, AccountSourceType.TELEBIRR)
+        }
+
+        // Telebirr Amharic Debit: ብር 200.00 በተሳካ ሁኔታ ልከዋል
+        val debitPattern = Regex("""ብር\s*([\d,]+\.?\d*)\s*በተሳካ\s*ሁኔታ\s*(?:ልከዋል|ከፍለዋል)""")
+        val debitMatch = debitPattern.find(smsBody)
+        if (debitMatch != null) {
+            val amount = debitMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+            return createTransaction(amount, TransactionType.EXPENSE, "TeleBirr Send (Amharic)", sender, AccountSourceType.TELEBIRR)
+        }
+        return null
+    }
+
+    private fun parseGenericTransaction(smsBody: String, sender: String): Transaction? {
+        // Generic fallback using keywords
+        val isIncome = smsBody.contains("ገቢ") || smsBody.contains("ተቀማጭ") || smsBody.contains("ደርሶዎታል") || smsBody.contains("ተመዝግቧል")
+        val isExpense = smsBody.contains("ወጪ") || smsBody.contains("ልከዋል") || smsBody.contains("ተቀንሷል")
+
+        if (!isIncome && !isExpense) return null
+
+        val amountPattern = Regex("""(?:ብር|በብር|በ)\s*([\d,]+\.?\d*)""")
+        val match = amountPattern.find(smsBody)
+        val amount = match?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull()
+
+        return amount?.let {
+            createTransaction(
+                amount = it,
+                type = if (isIncome) TransactionType.INCOME else TransactionType.EXPENSE,
+                category = "Generic Amharic Transaction",
+                sourcePhoneNumber = sender,
+                accountSourceType = AccountSourceType.BANK_OTHER
             )
-        } else {
-            emptyList()
         }
     }
-    
-    private fun convertAmharicDate(amharicDate: String): String {
-        val parts = amharicDate.split("/")
-        if (parts.size != 3) return ""
-        
-        return "${parts[2]}-${parts[1]}-${parts[0]}"
-    }
-    
-    private fun parseExpiryTimestamp(dateString: String): Long {
-        return try {
-            val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            format.parse(dateString)?.time ?: System.currentTimeMillis()
-        } catch (e: Exception) {
-            System.currentTimeMillis() + (30 * 24 * 60 * 60 * 1000L)
-        }
-    }
-    
-    private fun calculateDaysUntil(timestamp: Long): Int {
-        val diff = timestamp - System.currentTimeMillis()
-        return (diff / (1000 * 60 * 60 * 24)).toInt()
+
+    private fun createTransaction(amount: Double, type: TransactionType, category: String, sourcePhoneNumber: String, accountSourceType: AccountSourceType): Transaction {
+        return Transaction(
+            amount = amount,
+            type = type,
+            category = category,
+            source = sourcePhoneNumber,
+            description = category,
+            timestamp = System.currentTimeMillis(),
+            accountSource = accountSourceType,
+            sourcePhoneNumber = sourcePhoneNumber,
+            isClassified = true
+        )
     }
 }

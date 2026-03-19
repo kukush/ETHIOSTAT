@@ -3,6 +3,7 @@ package com.ethiostat.app.ui.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ethiostat.app.domain.model.AppLanguage
+import com.ethiostat.app.domain.model.BalancePackage
 import com.ethiostat.app.domain.model.BalancePackageFactory
 import com.ethiostat.app.domain.model.TimePeriod
 import com.ethiostat.app.domain.model.AccountSourceType
@@ -88,9 +89,12 @@ class DashboardViewModel(
                 }.collectLatest { (firstTriple, secondTriple) ->
                     val (balances, transactions, config) = firstTriple
                     val (unreadMessages, unreadCount, accountSources) = secondTriple
-                    val summary = getFinancialSummaryUseCase(
+                    val summary = calculateSummaryWithFilters(
                         transactions,
-                        _state.value.selectedPeriod
+                        _state.value.selectedPeriod,
+                        _state.value.selectedAccountSource,
+                        _state.value.selectedSourceFilter,
+                        accountSources
                     )
                     
                     val language = AppLanguage.fromCode(config?.appLanguage ?: "en")
@@ -137,15 +141,37 @@ class DashboardViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val result = syncBalanceUseCase.refreshTelecomData()
+                // 1. Execute *804# which will trigger an incoming SMS from Ethio Telecom
+                val result804 = syncBalanceUseCase.refreshTelecomData()
+                
+                // 2. Execute *999*3*5# safely
+                val resultSms = syncBalanceUseCase.checkSmsBalance()
+                if (resultSms.isSuccess) {
+                    val message = resultSms.getOrNull() ?: ""
+                    // Try to extract any number near "SMS", "msg", or just take the largest number
+                    val numberMatch = Regex("(?i)(\\d+)[\\s]*(sms|msg|message)").find(message)
+                        ?: Regex("(\\d+)(?!\\d)").find(message) // Fallback to last number in string
+                        
+                    val amount = numberMatch?.groupValues?.get(1)?.toDoubleOrNull()
+                    if (amount != null && amount >= 0) {
+                        val newSmsPkg = BalancePackage.createZeroSms().copy(
+                            remainingAmount = amount,
+                            totalAmount = amount,
+                            expiryDate = "Valid"
+                        )
+                        repository.insertBalance(newSmsPkg)
+                    }
+                }
+                
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        syncSuccess = result.isSuccess,
-                        error = result.exceptionOrNull()?.message
+                        syncSuccess = result804.isSuccess || resultSms.isSuccess,
+                        error = result804.exceptionOrNull()?.message ?: resultSms.exceptionOrNull()?.message
                     )
                 }
-                if (result.isSuccess) {
+                
+                if (result804.isSuccess || resultSms.isSuccess) {
                     loadData()
                 }
             } catch (e: Exception) {
@@ -161,16 +187,14 @@ class DashboardViewModel(
     
     private fun filterBySource(sourceType: AccountSourceType?) {
         viewModelScope.launch {
-            _state.update { it.copy(selectedSourceFilter = sourceType) }
-            
-            val allTransactions = _state.value.transactions
-            val filteredTransactions = if (sourceType != null) {
-                allTransactions.filter { it.accountSource == sourceType }
-            } else {
-                allTransactions
-            }
-            
-            val summary = getFinancialSummaryUseCase(filteredTransactions, _state.value.selectedPeriod)
+            val newState = _state.updateAndGet { it.copy(selectedSourceFilter = sourceType) }
+            val summary = calculateSummaryWithFilters(
+                newState.transactions,
+                newState.selectedPeriod,
+                newState.selectedAccountSource,
+                newState.selectedSourceFilter,
+                newState.accountSources
+            )
             _state.update { it.copy(financialSummary = summary) }
         }
     }
@@ -202,7 +226,7 @@ class DashboardViewModel(
     
     private fun syncViaUssd(ussdCode: String) {
         viewModelScope.launch {
-            val result = syncBalanceUseCase(ussdCode)
+            val result = syncBalanceUseCase.sendDirectUssdRequest(ussdCode)
             
             _state.update {
                 it.copy(
@@ -215,10 +239,14 @@ class DashboardViewModel(
     
     private fun filterTransactions(period: TimePeriod) {
         viewModelScope.launch {
-            _state.update { it.copy(selectedPeriod = period) }
-            
-            val transactions = _state.value.transactions
-            val summary = getFinancialSummaryUseCase(transactions, period)
+            val newState = _state.updateAndGet { it.copy(selectedPeriod = period) }
+            val summary = calculateSummaryWithFilters(
+                newState.transactions,
+                newState.selectedPeriod,
+                newState.selectedAccountSource,
+                newState.selectedSourceFilter,
+                newState.accountSources
+            )
             
             _state.update {
                 it.copy(financialSummary = summary)
@@ -378,11 +406,23 @@ class DashboardViewModel(
     
     private fun selectAccountSource(source: com.ethiostat.app.domain.model.AccountSource?) {
         android.util.Log.d("EthioStat", "Selecting AccountSource: ${source?.displayName ?: "All Sources"}")
-        _state.update { it.copy(selectedAccountSource = source) }
         
-        // Also update the legacy selectedSourceFilter for compatibility
-        val sourceType = source?.type
-        _state.update { it.copy(selectedSourceFilter = sourceType) }
+        val newState = _state.updateAndGet { 
+            it.copy(
+                selectedAccountSource = source,
+                selectedSourceFilter = source?.type
+            ) 
+        }
+        
+        val summary = calculateSummaryWithFilters(
+            newState.transactions,
+            newState.selectedPeriod,
+            newState.selectedAccountSource,
+            newState.selectedSourceFilter,
+            newState.accountSources
+        )
+        
+        _state.update { it.copy(financialSummary = summary) }
     }
     
     private fun showAccountSourcesScreen() {
@@ -398,22 +438,22 @@ class DashboardViewModel(
     private suspend fun ensureDefaultSources(currentSources: List<com.ethiostat.app.domain.model.AccountSource>) {
         val defaultSources = listOf(
             com.ethiostat.app.domain.model.AccountSource(
-                name = "Telebirr",
-                displayName = "Telebirr",
+                name = "TeleBirr",
+                displayName = "TeleBirr",
                 type = com.ethiostat.app.domain.model.AccountSourceType.TELEBIRR,
-                phoneNumber = ""
+                phoneNumber = "127"  // TeleBirr Oromo/financial SMS sender
             ),
             com.ethiostat.app.domain.model.AccountSource(
                 name = "CBE",
-                displayName = "CBE",
+                displayName = "Commercial Bank of Ethiopia",
                 type = com.ethiostat.app.domain.model.AccountSourceType.BANK_CBE,
-                phoneNumber = ""
+                phoneNumber = "CBE"  // Commercial Bank of Ethiopia SMS sender
             ),
             com.ethiostat.app.domain.model.AccountSource(
-                name = "Awash",
-                displayName = "Awash",
-                type = com.ethiostat.app.domain.model.AccountSourceType.BANK_AWASH,
-                phoneNumber = ""
+                name = "BOA",
+                displayName = "Bank of Abyssinia",
+                type = com.ethiostat.app.domain.model.AccountSourceType.BANK_BOA,
+                phoneNumber = "BOA"  // Bank of Abyssinia SMS sender
             )
         )
         
@@ -426,5 +466,28 @@ class DashboardViewModel(
                 repository.insertAccountSource(defaultSource)
             }
         }
+    }
+    
+    private fun calculateSummaryWithFilters(
+        transactions: List<com.ethiostat.app.domain.model.Transaction>,
+        period: TimePeriod,
+        selectedAccountSource: com.ethiostat.app.domain.model.AccountSource?,
+        selectedSourceFilter: AccountSourceType?,
+        accountSources: List<com.ethiostat.app.domain.model.AccountSource>
+    ): com.ethiostat.app.domain.model.FinancialSummary {
+        val filteredTransactions = when {
+            selectedAccountSource != null -> {
+                transactions.filter { it.accountSource == selectedAccountSource.type }
+            }
+            selectedSourceFilter != null -> {
+                transactions.filter { it.accountSource == selectedSourceFilter }
+            }
+            else -> {
+                // All resources selected. Only include transactions from enabled sources.
+                val activeSourceTypes = accountSources.filter { it.isEnabled }.map { it.type }
+                transactions.filter { it.accountSource in activeSourceTypes }
+            }
+        }
+        return getFinancialSummaryUseCase(filteredTransactions, period)
     }
 }

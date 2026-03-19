@@ -10,7 +10,9 @@ class OromoSmsParser : SmsParser {
         val oromoKeywords = listOf(
             "hanqina", "balansi", "argatte", "fudhatte", "ergite", "kaffale",
             "dabarsuu", "kaffaltii", "kuusuu", "baasuu", "birr", "telebirr",
-            "herrega", "akawuntii", "daldalaa"
+            "herrega", "akawuntii", "daldalaa",
+            // TeleBirr Oromo transfer keywords (sender: 127)
+            "qarshii", "hafteen", "kabajamoo"
         )
         return oromoKeywords.any { cleanedBody.contains(it) }
     }
@@ -19,13 +21,13 @@ class OromoSmsParser : SmsParser {
         // Oromo keywords for transaction detection
         private val OROMO_KEYWORDS = mapOf(
             "balance" to listOf("hanqina", "balansi", "hafe"),
-            "received" to listOf("argatte", "fudhatte", "galte"),
-            "sent" to listOf("ergite", "kaffale", "bahe"),
+            "received" to listOf("argatte", "fudhatte", "galte", "qaqqabeera", "seene", "galii"),
+            "sent" to listOf("ergite", "kaffale", "bahe", "ergeera", "baasii"),
             "transfer" to listOf("dabarsuu", "erguu"),
             "payment" to listOf("kaffaltii", "baasii"),
-            "deposit" to listOf("kuusuu", "galchuu"),
-            "withdrawal" to listOf("baasuu", "fudhachuu"),
-            "birr" to listOf("birr", "br"),
+            "deposit" to listOf("kuusuu", "galchuu", "galii", "seene"),
+            "withdrawal" to listOf("baasuu", "fudhachuu", "bahe", "baasii"),
+            "birr" to listOf("birr", "br", "qarshii", "etb"),
             "telebirr" to listOf("telebirr", "telebir"),
             "account" to listOf("herrega", "akawuntii"),
             "transaction" to listOf("daldalaa", "jijjiirraa")
@@ -33,10 +35,14 @@ class OromoSmsParser : SmsParser {
         
         // Oromo number patterns
         private val OROMO_AMOUNT_PATTERNS = listOf(
-            Pattern.compile("birr\\s*(\\d+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("br\\s*(\\d+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(\\d+(?:\\.\\d{2})?)\\s*birr", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(\\d+(?:\\.\\d{2})?)\\s*br", Pattern.CASE_INSENSITIVE)
+            Pattern.compile("birr\\s*([\\d,]+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("br\\s*([\\d,]+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("([\\d,]+(?:\\.\\d{2})?)\\s*birr", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("([\\d,]+(?:\\.\\d{2})?)\\s*br", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("qarshii\\s*([\\d,]+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("([\\d,]+(?:\\.\\d{2})?)\\s*qarshii", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("etb\\s*([\\d,]+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("([\\d,]+(?:\\.\\d{2})?)\\s*etb", Pattern.CASE_INSENSITIVE)
         )
         
         // Telebirr specific patterns in Oromo
@@ -45,6 +51,23 @@ class OromoSmsParser : SmsParser {
             "received_money" to Pattern.compile("argatte.*birr\\s*(\\d+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE),
             "sent_money" to Pattern.compile("ergite.*birr\\s*(\\d+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE),
             "payment" to Pattern.compile("kaffaltii.*birr\\s*(\\d+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE)
+        )
+
+        // TeleBirr Oromo transfer patterns (sender: 127)
+        // Sample: "Qarshii 1,200.00 herrega telebirr keessan ... irraa gara ..."
+        private val TELEBIRR_OROMO_TRANSFER_OUT = Regex(
+            """Qarshii\s+([\d,]+\.?\d*)\s+herrega\s+telebirr\s+keessan\s+(\d+)\s+irraa\s+gara\s+(.+?)\s+lakkoofsa""",
+            RegexOption.IGNORE_CASE
+        )
+        // Sample: "Hafteen herregaa amma qabdan Qarshii 13.95 dha."
+        private val TELEBIRR_OROMO_BALANCE = Regex(
+            """Hafteen\s+herregaa\s+amma\s+qabdan\s+Qarshii\s+([\d,]+\.?\d*)""",
+            RegexOption.IGNORE_CASE
+        )
+        // Service fee: "Kaffaltiin tajaajilla Qarshii 5.22 dha."
+        private val TELEBIRR_OROMO_FEE = Regex(
+            """Kaffaltiin\s+tajaajilla\s+Qarshii\s+([\d,]+\.?\d*)\s+dha""",
+            RegexOption.IGNORE_CASE
         )
         
         // Bank transaction patterns in Oromo
@@ -68,8 +91,10 @@ class OromoSmsParser : SmsParser {
     }
     
     private fun isTelebirrMessage(sender: String, body: String): Boolean {
-        return sender.contains("830") || 
+        return sender.contains("830") ||
+               sender.contains("127") ||   // TeleBirr Oromo sender
                body.contains("telebirr") ||
+               body.contains("qarshii") || // Oromo currency keyword
                OROMO_KEYWORDS["telebirr"]?.any { body.contains(it) } == true
     }
     
@@ -88,7 +113,32 @@ class OromoSmsParser : SmsParser {
     }
     
     private fun parseTelebirrMessage(body: String, sender: String): ParsedSmsData {
-        // Try to extract amount
+        // Try specific Oromo transfer-out pattern first (sender 127)
+        val transferMatch = TELEBIRR_OROMO_TRANSFER_OUT.find(body)
+        if (transferMatch != null) {
+            val amount = transferMatch.groupValues[1].replace(",", "").toDoubleOrNull()
+                ?: return ParsedSmsData.empty()
+            val destination = transferMatch.groupValues[3].trim()
+            val transaction = Transaction(
+                amount = amount,
+                type = TransactionType.EXPENSE,
+                category = "Transfer",
+                source = "TeleBirr",
+                description = "TeleBirr transfer to $destination",
+                timestamp = System.currentTimeMillis(),
+                accountSource = AccountSourceType.TELEBIRR,
+                sourcePhoneNumber = sender,
+                isClassified = true
+            )
+            return ParsedSmsData(
+                isParsed = true,
+                transaction = transaction,
+                packages = emptyList(),
+                language = SmsLanguage.OROMO
+            )
+        }
+
+        // Fallback: generic amount extraction
         val amount = extractAmount(body) ?: return ParsedSmsData.empty()
         
         // Determine transaction type
@@ -96,7 +146,8 @@ class OromoSmsParser : SmsParser {
             OROMO_KEYWORDS["received"]?.any { body.contains(it) } == true -> TransactionType.INCOME
             OROMO_KEYWORDS["sent"]?.any { body.contains(it) } == true -> TransactionType.EXPENSE
             OROMO_KEYWORDS["payment"]?.any { body.contains(it) } == true -> TransactionType.EXPENSE
-            else -> TransactionType.INCOME // Default for balance checks
+            body.contains("irraa gara") -> TransactionType.EXPENSE // "from ... to ..." = transfer out
+            else -> TransactionType.INCOME
         }
         
         val transaction = Transaction(
@@ -187,7 +238,7 @@ class OromoSmsParser : SmsParser {
             val matcher = pattern.matcher(text)
             if (matcher.find()) {
                 return try {
-                    matcher.group(1).toDouble()
+                    matcher.group(1).replace(",", "").toDouble()
                 } catch (e: NumberFormatException) {
                     null
                 }

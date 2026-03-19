@@ -1,41 +1,74 @@
 package com.ethiostat.app.domain.usecase
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
+import android.telephony.TelephonyManager
+import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 class SyncBalanceUseCase(
     private val context: Context
 ) {
     companion object {
         private const val TELECOM_USSD_CODE = "*804#"
+        private const val SMS_BALANCE_USSD = "*999*3*5#"
+    }
+
+    suspend fun checkSmsBalance(): Result<String> {
+        return sendDirectUssdRequest(SMS_BALANCE_USSD)
+    }
+
+    // Specific method for telecom service data refresh
+    suspend fun refreshTelecomData(): Result<String> {
+        return sendDirectUssdRequest(TELECOM_USSD_CODE)
     }
     
-    operator fun invoke(ussdCode: String = TELECOM_USSD_CODE): Result<Unit> {
-        return try {
+    @RequiresPermission(Manifest.permission.CALL_PHONE)
+    suspend fun sendDirectUssdRequest(ussdCode: String): Result<String> = suspendCancellableCoroutine { continuation ->
+        try {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) 
                 != PackageManager.PERMISSION_GRANTED) {
-                return Result.failure(SecurityException("CALL_PHONE permission not granted"))
+                continuation.resume(Result.failure(SecurityException("CALL_PHONE permission not granted")))
+                return@suspendCancellableCoroutine
             }
             
-            val encodedCode = Uri.encode(ussdCode)
-            val intent = Intent(Intent.ACTION_CALL).apply {
-                data = Uri.parse("tel:$encodedCode")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            val manager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            val handler = Handler(Looper.getMainLooper())
+            
+            val callback = object : TelephonyManager.UssdResponseCallback() {
+                override fun onReceiveUssdResponse(
+                    telephonyManager: TelephonyManager?,
+                    request: String?,
+                    returnMessage: CharSequence?
+                ) {
+                    super.onReceiveUssdResponse(telephonyManager, request, returnMessage)
+                    if (continuation.isActive) {
+                        continuation.resume(Result.success(returnMessage?.toString() ?: "Success"))
+                    }
+                }
+
+                override fun onReceiveUssdResponseFailed(
+                    telephonyManager: TelephonyManager?,
+                    request: String?,
+                    failureCode: Int
+                ) {
+                    super.onReceiveUssdResponseFailed(telephonyManager, request, failureCode)
+                    if (continuation.isActive) {
+                        continuation.resume(Result.failure(Exception("USSD request failed with code: $failureCode")))
+                    }
+                }
             }
             
-            context.startActivity(intent)
-            Result.success(Unit)
+            manager.sendUssdRequest(ussdCode, callback, handler)
         } catch (e: Exception) {
-            Result.failure(e)
+            if (continuation.isActive) {
+                continuation.resume(Result.failure(e))
+            }
         }
-    }
-    
-    // Specific method for telecom service data refresh
-    fun refreshTelecomData(): Result<Unit> {
-        return invoke(TELECOM_USSD_CODE)
     }
 }

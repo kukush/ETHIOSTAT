@@ -32,6 +32,9 @@ data class DashboardState(
     val bonusFunds: List<BalancePackage>
         get() = balances.filter { it.packageType == PackageType.BONUS_FUND }
     
+    val smsPackages: List<BalancePackage>
+        get() = balances.filter { it.packageType == PackageType.SMS }
+    
     val totalInternetMB: Double
         get() = internetPackages.sumOf { it.remainingAmount }
     

@@ -93,7 +93,10 @@ class MainActivity : ComponentActivity() {
             getFinancialSummaryUseCase = GetFinancialSummaryUseCase(),
             syncBalanceUseCase = SyncBalanceUseCase(applicationContext),
             changeLanguageUseCase = ChangeLanguageUseCase(repository),
-            readTransactionSourceSmsUseCase = ReadTransactionSourceSmsUseCase(repository)
+            readTransactionSourceSmsUseCase = ReadTransactionSourceSmsUseCase(
+                repository = repository,
+                context = applicationContext
+            )
         )
         
         // Start auto-sync if permissions are already granted

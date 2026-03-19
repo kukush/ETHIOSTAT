@@ -13,6 +13,7 @@ data class AccountSource(
 enum class AccountSourceType {
     TELEBIRR,
     BANK_CBE,
+    BANK_BOA,    // Bank of Abyssinia (sender: BOA)
     BANK_AWASH,
     BANK_OTHER,
     TELECOM
