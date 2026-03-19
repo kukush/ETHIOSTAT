@@ -90,14 +90,12 @@ class EthioStatRepositoryImpl(
         }
         
         if (parsedData.isParsed) {
-            // Delete ALL old balances of same type before inserting fresh combined data
-            // This ensures old packages with different sources are removed
-            val typesToDelete = parsedData.packages.map { it.packageType }.distinct()
-            typesToDelete.forEach { type ->
-                android.util.Log.d("EthioStat", "Deleting ALL old balances for type=${type}")
-                balanceDao.deleteByType(type.name)
-            }
+            // Delete PRECISE balances of same name AND same type before inserting fresh data
+            // This ensures "Account Balance" doesn't wipe out "Recharge Bonus"
             parsedData.packages.forEach { pkg ->
+                android.util.Log.d("EthioStat", "Deleting existing balance for name=${pkg.packageName} type=${pkg.packageType}")
+                balanceDao.deleteByNameAndType(pkg.packageName, pkg.packageType.name)
+                
                 android.util.Log.d("EthioStat", "Inserting balance pkg type=${pkg.packageType} name=${pkg.packageName} rem=${pkg.remainingAmount} total=${pkg.totalAmount} exp=${pkg.expiryDate}")
                 insertBalance(pkg)
             }

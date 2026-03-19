@@ -26,5 +26,6 @@ sealed class DashboardIntent {
     object ShowUnreadMessages : DashboardIntent()
     data class MarkMessageAsRead(val messageId: Long) : DashboardIntent()
     object MarkAllMessagesAsRead : DashboardIntent()
+    object ScanSmsHistory : DashboardIntent()
     object ClearError : DashboardIntent()
 }

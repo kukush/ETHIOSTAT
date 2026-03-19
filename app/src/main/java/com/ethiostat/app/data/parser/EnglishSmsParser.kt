@@ -132,7 +132,7 @@ class EnglishSmsParser : SmsParser {
         // FIX: previously parseTelecomUssdResponse() was always called regardless,
         // causing double-counting of internet packages for 251994 sender.
         if (allRaw.isEmpty()) {
-            val telecomPackages = parseTelecomUssdResponse(smsBody, sender)
+            val telecomPackages = parseTelecomUssdResponse(smsBody)
             if (telecomPackages.isEmpty()) {
                 allRaw.addAll(parseTelecomFallback(smsBody, sender))
             } else {
@@ -470,7 +470,7 @@ class EnglishSmsParser : SmsParser {
     // -----------------------------------------------------------------------
     // Telecom USSD fallback (used only when primary parser finds nothing)
     // -----------------------------------------------------------------------
-    private fun parseTelecomUssdResponse(smsBody: String, sender: String): List<BalancePackage> {
+    private fun parseTelecomUssdResponse(smsBody: String): List<BalancePackage> {
         val packages = mutableListOf<BalancePackage>()
 
         telecomInternetPattern.findAll(smsBody).forEach { match ->
@@ -781,7 +781,7 @@ class EnglishSmsParser : SmsParser {
         Log.d("EthioStat", "Parsed account balance: $amount Birr")
 
         return BalancePackage(
-            packageType = PackageType.BONUS_FUND,
+            packageType = PackageType.MAIN_BALANCE,
             packageName = "Account Balance",
             totalAmount = amount,
             remainingAmount = amount,

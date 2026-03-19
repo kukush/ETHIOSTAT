@@ -26,13 +26,15 @@ jq -c '.[]' "$JSON_PATH" | while read i; do
     body=$(echo "$i" | jq -r '.body')
 
     echo "Sending [$bank - $lang - $type]..."
-    safe_body="${body//\'/\\\'}"
+    # Escape double quotes just in case
+    safe_body="${body//\"/\\\"}"
     
     # Redirect stdin to avoid adb consuming the while-loop input stream
-    adb shell "am broadcast -a com.ethiostat.app.DEBUG_SMS -n com.ethiostat.app/.receiver.SmsReceiver --es sender \"$bank\" --es body '${safe_body}'" </dev/null >/dev/null
+    # Use double quotes for the body to simplify escaping of single quotes
+    adb shell "am broadcast -a com.ethiostat.app.DEBUG_SMS -n com.ethiostat.app/.receiver.SmsReceiver --es sender \"$bank\" --es body \"$safe_body\"" </dev/null >/dev/null
 
     # small pause to allow the background receiver and Flow collect to process cleanly
-    sleep 1.0
+    sleep 0.8
 done
 
 echo "Done! Check your EthioStat Transaction History screen."

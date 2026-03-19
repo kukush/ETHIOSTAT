@@ -45,7 +45,7 @@ class AmharicSmsParser : SmsParser {
         val amount = match.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
 
         return BalancePackage(
-            packageType = PackageType.BONUS_FUND,
+            packageType = PackageType.MAIN_BALANCE,
             packageName = "Account Balance",
             totalAmount = amount,
             remainingAmount = amount,

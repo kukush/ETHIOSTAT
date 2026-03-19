@@ -5,6 +5,7 @@ enum class PackageType {
     VOICE,
     NIGHT_BONUS,
     BONUS_FUND,
+    MAIN_BALANCE,
     SMS,
     UNKNOWN
 }

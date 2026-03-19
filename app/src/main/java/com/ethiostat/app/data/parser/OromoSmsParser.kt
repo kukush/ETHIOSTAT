@@ -217,7 +217,7 @@ class OromoSmsParser : SmsParser {
             val amount = balanceMatch.groupValues[1].replace(",", "").toDoubleOrNull()
             if (amount != null) {
                 packages.add(BalancePackage(
-                    packageType = PackageType.BONUS_FUND,
+                    packageType = PackageType.MAIN_BALANCE,
                     packageName = "Account Balance",
                     remainingAmount = amount,
                     totalAmount = amount,

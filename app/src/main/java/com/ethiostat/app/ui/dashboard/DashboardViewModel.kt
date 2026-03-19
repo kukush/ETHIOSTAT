@@ -24,7 +24,8 @@ class DashboardViewModel(
     private val getFinancialSummaryUseCase: GetFinancialSummaryUseCase,
     private val syncBalanceUseCase: SyncBalanceUseCase,
     private val changeLanguageUseCase: ChangeLanguageUseCase,
-    private val readTransactionSourceSmsUseCase: ReadTransactionSourceSmsUseCase
+    private val readTransactionSourceSmsUseCase: ReadTransactionSourceSmsUseCase,
+    private val syncSmsHistoryUseCase: com.ethiostat.app.domain.usecase.SyncSmsHistoryUseCase
 ) : ViewModel() {
     
     private val _state = MutableStateFlow(DashboardState())
@@ -41,6 +42,7 @@ class DashboardViewModel(
             is DashboardIntent.LoadData -> loadData()
             is DashboardIntent.RefreshBalances -> refreshBalances()
             is DashboardIntent.RefreshUssd804 -> refreshUssd804()
+            is DashboardIntent.ScanSmsHistory -> scanSmsHistory()
             is DashboardIntent.SyncUssd -> syncViaUssd(intent.ussdCode)
             is DashboardIntent.FilterTransactions -> filterTransactions(intent.period)
             is DashboardIntent.FilterBySource -> filterBySource(intent.sourceType)
@@ -143,6 +145,12 @@ class DashboardViewModel(
             try {
                 // 1. Execute *804# which will trigger an incoming SMS from Ethio Telecom
                 val result804 = syncBalanceUseCase.refreshTelecomData()
+                
+                // 1.5 Fallback to scanning SMS history if USSD message wasn't immediately received
+                if (result804.isFailure) {
+                    android.util.Log.d("EthioStat", "USSD refresh failed, falling back to history scan")
+                    syncSmsHistoryUseCase(7)
+                }
                 
                 // 2. Execute *999*3*5# safely
                 val resultSms = syncBalanceUseCase.checkSmsBalance()
@@ -489,5 +497,31 @@ class DashboardViewModel(
             }
         }
         return getFinancialSummaryUseCase(filteredTransactions, period)
+    }
+
+    private fun scanSmsHistory() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            try {
+                val result = syncSmsHistoryUseCase(30) // Scan last 30 days
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        syncSuccess = result.isSuccess,
+                        error = result.exceptionOrNull()?.message
+                    )
+                }
+                if (result.isSuccess) {
+                    loadData()
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Scanner failed: ${e.message}"
+                    )
+                }
+            }
+        }
     }
 }

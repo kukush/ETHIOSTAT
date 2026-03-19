@@ -96,6 +96,10 @@ class MainActivity : ComponentActivity() {
             readTransactionSourceSmsUseCase = ReadTransactionSourceSmsUseCase(
                 repository = repository,
                 context = applicationContext
+            ),
+            syncSmsHistoryUseCase = com.ethiostat.app.domain.usecase.SyncSmsHistoryUseCase(
+                context = applicationContext,
+                repository = repository
             )
         )
         

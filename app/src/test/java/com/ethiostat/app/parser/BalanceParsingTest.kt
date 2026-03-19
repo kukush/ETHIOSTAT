@@ -45,7 +45,7 @@ class BalanceParsingTest {
         val result = enParser.parse(sms, "251994")
         assertTrue(result.isParsed)
 
-        val accounts = result.packages.filter { it.packageName == "Account Balance" }
+        val accounts = result.packages.filter { it.packageType == PackageType.MAIN_BALANCE }
         assertEquals("Should have found account balance", 1, accounts.size)
         // User reports it reads 50.00 (recharged balance) instead of 50.01
         assertEquals("Balance should be 50.01, not 50.00", 50.01, accounts.first().remainingAmount, 0.001)
@@ -59,10 +59,10 @@ class BalanceParsingTest {
         val result = enParser.parse(sms, "251994")
         assertTrue(result.isParsed)
 
-        val accounts = result.packages.filter { it.packageName == "Account Balance" }
-        assertTrue("Bonus award should not be parsed as main 'Account Balance'", accounts.isEmpty())
+        val accounts = result.packages.filter { it.packageType == PackageType.MAIN_BALANCE }
+        assertTrue("Bonus award should not be parsed as main balance", accounts.isEmpty())
 
-        val bonuses = result.packages.filter { it.packageName == "Recharge Bonus" }
+        val bonuses = result.packages.filter { it.packageType == PackageType.BONUS_FUND }
         assertEquals("Should have found recharge bonus", 1, bonuses.size)
         assertEquals(7.50, bonuses.first().remainingAmount, 0.001)
     }
@@ -72,7 +72,7 @@ class BalanceParsingTest {
         val sms = "ቀሪ ሂሳብዎ 50.01 ብር::"
         val result = amParser.parse(sms, "251994")
         assertTrue(result.isParsed)
-        val accounts = result.packages.filter { it.packageName == "Account Balance" }
+        val accounts = result.packages.filter { it.packageType == PackageType.MAIN_BALANCE }
         assertEquals(50.01, accounts.first().remainingAmount, 0.001)
     }
 
@@ -81,7 +81,7 @@ class BalanceParsingTest {
         val sms = "የ 7.50 ብር ቦነስ ተሸልመዋል"
         val result = amParser.parse(sms, "251994")
         assertTrue(result.isParsed)
-        val bonuses = result.packages.filter { it.packageName == "Recharge Bonus" }
+        val bonuses = result.packages.filter { it.packageType == PackageType.BONUS_FUND }
         assertEquals(7.50, bonuses.first().remainingAmount, 0.001)
     }
 
@@ -90,7 +90,7 @@ class BalanceParsingTest {
         val sms = "Hafteen herregaa amma qabdan Qarshii 13.95 dha."
         val result = orParser.parse(sms, "251994")
         assertTrue(result.isParsed)
-        val accounts = result.packages.filter { it.packageName == "Account Balance" }
+        val accounts = result.packages.filter { it.packageType == PackageType.MAIN_BALANCE }
         assertEquals(13.95, accounts.first().remainingAmount, 0.001)
     }
 
@@ -99,7 +99,7 @@ class BalanceParsingTest {
         val sms = "Boonasii Qarshii 7.50 badhaafamtaniittu"
         val result = orParser.parse(sms, "251994")
         assertTrue(result.isParsed)
-        val bonuses = result.packages.filter { it.packageName == "Recharge Bonus" }
+        val bonuses = result.packages.filter { it.packageType == PackageType.BONUS_FUND }
         assertEquals(7.50, bonuses.first().remainingAmount, 0.001)
     }
 }

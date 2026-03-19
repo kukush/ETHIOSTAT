@@ -1,0 +1,48 @@
+Initialized native services in: /Users/getahuntesfaye/.gradle/native
+Initialized jansi services in: /Users/getahuntesfaye/.gradle/native
+Received JVM installation metadata from '/Users/getahuntesfaye/.sdkman/candidates/java/21.0.4-tem': {JAVA_HOME=/Users/getahuntesfaye/.sdkman/candidates/java/21.0.4-tem, JAVA_VERSION=21.0.4, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=21.0.4+7-LTS, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=21.0.4+7-LTS, VM_VENDOR=Eclipse Adoptium, OS_ARCH=x86_64}
+Removing daemon from the registry due to communication failure. Daemon information: DaemonInfo{pid=14336, address=[5644d8a0-e430-432b-8492-f2e1f0dd1f7a port:59565, addresses:[/127.0.0.1]], state=Idle, lastBusy=1773962282986, context=DefaultDaemonContext[uid=3b773e13-8c05-4539-b727-1320e59bd8a0,javaHome=/Users/getahuntesfaye/.sdkman/candidates/java/21.0.4-tem,daemonRegistryDir=/Users/getahuntesfaye/.gradle/daemon,pid=14336,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,daemonOpts=--add-opens=java.base/java.util=ALL-UNNAMED,--add-opens=java.base/java.lang=ALL-UNNAMED,--add-opens=java.base/java.lang.invoke=ALL-UNNAMED,--add-opens=java.prefs/java.util.prefs=ALL-UNNAMED,--add-opens=java.base/java.nio.charset=ALL-UNNAMED,--add-opens=java.base/java.net=ALL-UNNAMED,--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED,-Xmx2048m,-Dfile.encoding=UTF-8,-Duser.country=DE,-Duser.language=en,-Duser.variant]}
+Removing 6 daemon stop events from registry
+Previous Daemon (14336) stopped at Fri Mar 20 02:18:31 EAT 2026 by user or operating system
+Starting a Gradle Daemon, 1 incompatible and 1 stopped Daemons could not be reused, use --status for details
+Starting process 'Gradle build daemon'. Working directory: /Users/getahuntesfaye/.gradle/daemon/8.2 Command: /Users/getahuntesfaye/.sdkman/candidates/java/21.0.4-tem/bin/java --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-opens=java.base/java.nio.charset=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED -Xmx2048m -Dfile.encoding=UTF-8 -Duser.country=DE -Duser.language=en -Duser.variant -cp /Users/getahuntesfaye/.gradle/wrapper/dists/gradle-8.2-bin/bbg7u40eoinfdyxsxr3z4i7ta/gradle-8.2/lib/gradle-launcher-8.2.jar -javaagent:/Users/getahuntesfaye/.gradle/wrapper/dists/gradle-8.2-bin/bbg7u40eoinfdyxsxr3z4i7ta/gradle-8.2/lib/agents/gradle-instrumentation-agent-8.2.jar org.gradle.launcher.daemon.bootstrap.GradleDaemon 8.2
+Successfully started process 'Gradle build daemon'
+An attempt to start the daemon took 1.918 secs.
+Removing daemon from the registry due to communication failure. Daemon information: DaemonInfo{pid=20099, address=[6beb37d7-8ac6-435d-b34c-349eeaed186d port:60608, addresses:[/127.0.0.1]], state=Busy, lastBusy=1773962313515, context=DefaultDaemonContext[uid=ffe040e5-b619-4fe5-9fe9-a0d535a9879a,javaHome=/Users/getahuntesfaye/.sdkman/candidates/java/21.0.4-tem,daemonRegistryDir=/Users/getahuntesfaye/.gradle/daemon,pid=20099,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,daemonOpts=--add-opens=java.base/java.util=ALL-UNNAMED,--add-opens=java.base/java.lang=ALL-UNNAMED,--add-opens=java.base/java.lang.invoke=ALL-UNNAMED,--add-opens=java.prefs/java.util.prefs=ALL-UNNAMED,--add-opens=java.base/java.nio.charset=ALL-UNNAMED,--add-opens=java.base/java.net=ALL-UNNAMED,--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED,-Xmx2048m,-Dfile.encoding=UTF-8,-Duser.country=DE,-Duser.language=en,-Duser.variant]}
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Could not connect to the Gradle daemon.
+Daemon uid: ffe040e5-b619-4fe5-9fe9-a0d535a9879a with diagnostics:
+Daemon pid: 20099
+  log file: /Users/getahuntesfaye/.gradle/daemon/8.2/daemon-20099.out.log
+----- Last  20 lines from daemon log file - daemon-20099.out.log -----
+2026-03-20T02:18:33.443+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /10.2.0.2
+2026-03-20T02:18:33.443+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface en0
+2026-03-20T02:18:33.443+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-03-20T02:18:33.444+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /fe80:0:0:0:1851:8705:4e68:81ba%en0
+2026-03-20T02:18:33.445+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /192.168.1.2
+2026-03-20T02:18:33.445+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface lo0
+2026-03-20T02:18:33.446+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? true
+2026-03-20T02:18:33.446+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Ignoring remote address on loopback interface /fe80:0:0:0:0:0:0:1%lo0
+2026-03-20T02:18:33.447+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding loopback address /0:0:0:0:0:0:0:1%lo0
+2026-03-20T02:18:33.447+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding loopback address /127.0.0.1
+2026-03-20T02:18:33.451+0300 [DEBUG] [org.gradle.internal.remote.internal.inet.TcpIncomingConnector] Listening on [6beb37d7-8ac6-435d-b34c-349eeaed186d port:60608, addresses:[localhost/127.0.0.1]].
+2026-03-20T02:18:33.480+0300 [DEBUG] [org.gradle.launcher.daemon.server.Daemon] Daemon starting at: Fri Mar 20 02:18:33 EAT 2026, with address: [6beb37d7-8ac6-435d-b34c-349eeaed186d port:60608, addresses:[localhost/127.0.0.1]]
+2026-03-20T02:18:33.481+0300 [INFO] [org.gradle.launcher.daemon.server.DaemonRegistryUpdater] Advertising the daemon address to the clients: [6beb37d7-8ac6-435d-b34c-349eeaed186d port:60608, addresses:[localhost/127.0.0.1]]
+2026-03-20T02:18:33.481+0300 [DEBUG] [org.gradle.launcher.daemon.server.DaemonRegistryUpdater] Advertised daemon context: DefaultDaemonContext[uid=ffe040e5-b619-4fe5-9fe9-a0d535a9879a,javaHome=/Users/getahuntesfaye/.sdkman/candidates/java/21.0.4-tem,daemonRegistryDir=/Users/getahuntesfaye/.gradle/daemon,pid=20099,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,daemonOpts=--add-opens=java.base/java.util=ALL-UNNAMED,--add-opens=java.base/java.lang=ALL-UNNAMED,--add-opens=java.base/java.lang.invoke=ALL-UNNAMED,--add-opens=java.prefs/java.util.prefs=ALL-UNNAMED,--add-opens=java.base/java.nio.charset=ALL-UNNAMED,--add-opens=java.base/java.net=ALL-UNNAMED,--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED,-Xmx2048m,-Dfile.encoding=UTF-8,-Duser.country=DE,-Duser.language=en,-Duser.variant]
+2026-03-20T02:18:33.483+0300 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Storing daemon address: [6beb37d7-8ac6-435d-b34c-349eeaed186d port:60608, addresses:[localhost/127.0.0.1]], context: DefaultDaemonContext[uid=ffe040e5-b619-4fe5-9fe9-a0d535a9879a,javaHome=/Users/getahuntesfaye/.sdkman/candidates/java/21.0.4-tem,daemonRegistryDir=/Users/getahuntesfaye/.gradle/daemon,pid=20099,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,daemonOpts=--add-opens=java.base/java.util=ALL-UNNAMED,--add-opens=java.base/java.lang=ALL-UNNAMED,--add-opens=java.base/java.lang.invoke=ALL-UNNAMED,--add-opens=java.prefs/java.util.prefs=ALL-UNNAMED,--add-opens=java.base/java.nio.charset=ALL-UNNAMED,--add-opens=java.base/java.net=ALL-UNNAMED,--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED,-Xmx2048m,-Dfile.encoding=UTF-8,-Duser.country=DE,-Duser.language=en,-Duser.variant]
+2026-03-20T02:18:33.504+0300 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Waiting to acquire exclusive lock on daemon addresses registry.
+2026-03-20T02:18:33.511+0300 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Lock acquired on daemon addresses registry.
+2026-03-20T02:18:33.522+0300 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Releasing lock on daemon addresses registry.
+2026-03-20T02:18:33.524+0300 [LIFECYCLE] [org.gradle.launcher.daemon.server.Daemon] Daemon server started.
+2026-03-20T02:18:33.527+0300 [DEBUG] [org.gradle.launcher.daemon.bootstrap.DaemonStartupCommunication] Completed writing the daemon greeting. Closing streams...
+----- End of the daemon log -----
+
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.

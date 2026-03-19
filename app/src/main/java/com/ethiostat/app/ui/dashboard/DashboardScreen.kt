@@ -153,6 +153,7 @@ private fun BalanceList(
     ) {
         item {
             TelecomServiceSection(
+                mainBalance = state.mainBalance,
                 internetPackages = state.internetPackages,
                 voicePackages = state.voicePackages,
                 bonusFunds = state.bonusFunds,
@@ -202,6 +203,7 @@ private fun BalanceList(
 
 @Composable
 private fun TelecomServiceSection(
+    mainBalance: List<BalancePackage>,
     internetPackages: List<BalancePackage>,
     voicePackages: List<BalancePackage>,
     bonusFunds: List<BalancePackage>,
@@ -240,8 +242,9 @@ private fun TelecomServiceSection(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    // Display account balance in Birr from first fragment
-                    val accountBalance = bonusFunds.firstOrNull { it.packageName == "Account Balance" }
+                    // Display account balance in Birr from MAIN_BALANCE or specific fragments
+                    val accountBalance = mainBalance.firstOrNull() 
+                        ?: bonusFunds.firstOrNull { it.packageName == "Account Balance" }
                     if (accountBalance != null) {
                         Text(
                             text = "%.2f Birr".format(accountBalance.remainingAmount),
@@ -421,10 +424,19 @@ private fun ZeroBalanceState(state: DashboardState) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Tap the sync icon to load your balances",
+                        text = "Tap the sync icon or scan your inbox",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { onIntent(DashboardIntent.ScanSmsHistory) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Text("Scan SMS Inbox")
+                    }
                 }
             }
         }
