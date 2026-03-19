@@ -42,8 +42,15 @@ class EnglishSmsParser : SmsParser {
     )
 
     // Account balance in Birr from the first *804# response fragment
+    // FIX: More specific pattern to avoid matching "Recharged balance" 
     private val accountBalanceBirrPattern = Regex(
-        """(?:remaining\s+amount|account\s+balance).*?is\s+([\d,]+\.?\d*)\s*Birr""",
+        """Your\s+(?:total\s+)?balance\s+is\s+([\d,]+\.?\d*)\s*Birr""",
+        RegexOption.IGNORE_CASE
+    )
+
+    // Bonus reward for recharging via telebirr (e.g. "awarded an ETB 7.50 bonus")
+    private val awardedBonusPattern = Regex(
+        """awarded\s+an\s+(?:ETB\s+)?([\d,]+\.?\d*)\s*bonus""",
         RegexOption.IGNORE_CASE
     )
 
@@ -119,6 +126,7 @@ class EnglishSmsParser : SmsParser {
 
         // Step 2: account balance in Birr from first 251994 fragment
         parseAccountBalanceBirr(smsBody)?.let { allRaw.add(it) }
+        parseAwardedBonus(smsBody)?.let { allRaw.add(it) }
 
         // Step 3: Telecom USSD fallback — ONLY if primary parser found NO packages
         // FIX: previously parseTelecomUssdResponse() was always called regardless,
@@ -782,6 +790,26 @@ class EnglishSmsParser : SmsParser {
             validityDays = 365,
             expiryDate = "Check SMS for details",
             expiryTimestamp = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L),
+            language = "en"
+        )
+    }
+
+    private fun parseAwardedBonus(smsBody: String): BalancePackage? {
+        val match = awardedBonusPattern.find(smsBody) ?: return null
+        val amount = match.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+
+        Log.d("EthioStat", "Parsed awarded bonus: $amount ETB")
+
+        return BalancePackage(
+            packageType = PackageType.BONUS_FUND,
+            packageName = "Recharge Bonus",
+            totalAmount = amount,
+            remainingAmount = amount,
+            unit = "Birr",
+            source = "Ethio Telecom",
+            validityDays = 3,
+            expiryDate = "Bonus reward",
+            expiryTimestamp = System.currentTimeMillis() + (3 * 24 * 60 * 60 * 1000L),
             language = "en"
         )
     }

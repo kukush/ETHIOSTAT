@@ -75,8 +75,8 @@ class VoiceParsingTest {
         val combinedVoice = voicePackages.first()
         
         // Should combine 114 + 76 = 190 minutes (plus 34 seconds = 190.57 minutes)
-        // Actual parser returns double this amount: 380.57 minutes
-        val expectedMinutes = 2.0 * (114.0 + (34.0/60.0) + 76.0) // 114 min 34 sec + 76 min 0 sec (doubled)
+        // Should combine 114 + 76 = 190 minutes (plus 34 seconds = 190.57 minutes)
+        val expectedMinutes = 114.0 + (34.0/60.0) + 76.0 // 114 min 34 sec + 76 min 0 sec
         assertEquals("Should combine voice minutes correctly", expectedMinutes, combinedVoice.remainingAmount, 1.0)
         
         // Should have internet packages
@@ -105,7 +105,7 @@ class VoiceParsingTest {
         assertEquals("Should have exactly one voice package", 1, voicePackages.size)
         
         val voice = voicePackages.first()
-        val expectedMinutes = 240.0 + (15.0/60.0) // 240 min 15 sec (actual parser behavior)
+        val expectedMinutes = 120.0 + (15.0/60.0) // 120 min 15 sec
         assertEquals("Should parse single voice package correctly", expectedMinutes, voice.remainingAmount, 0.1)
     }
 }
