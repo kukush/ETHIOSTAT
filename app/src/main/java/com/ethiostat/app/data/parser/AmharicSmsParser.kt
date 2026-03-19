@@ -22,11 +22,12 @@ class AmharicSmsParser : SmsParser {
             parseTransactionForSender(smsBody, sender)
         }
 
-        // Packages parsing could go here, omitting for simplicity since we mostly need financial
-        // But keeping it compatible if needed
-        val packages = emptyList<BalancePackage>()
+        // Step 2: Account balance in Birr
+        val packages = mutableListOf<BalancePackage>()
+        parseAccountBalanceBirr(smsBody)?.let { packages.add(it) }
+        parseAwardedBonus(smsBody)?.let { packages.add(it) }
 
-        return if (transaction != null) {
+        return if (transaction != null || packages.isNotEmpty()) {
             ParsedSmsData.success(
                 packages = packages,
                 transaction = transaction,
@@ -35,6 +36,46 @@ class AmharicSmsParser : SmsParser {
         } else {
             ParsedSmsData.empty()
         }
+    }
+
+    private fun parseAccountBalanceBirr(smsBody: String): BalancePackage? {
+        // ቀሪ ሂሳብዎ 50.01 ብር
+        val balancePattern = Regex("""ቀሪ\s*ሂሳብዎ\s*(?:ብር\s*)?([\d,]+\.?\d*)\s*ብር""")
+        val match = balancePattern.find(smsBody) ?: return null
+        val amount = match.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+
+        return BalancePackage(
+            packageType = PackageType.BONUS_FUND,
+            packageName = "Account Balance",
+            totalAmount = amount,
+            remainingAmount = amount,
+            unit = "Birr",
+            source = "Ethio Telecom",
+            validityDays = 365,
+            expiryDate = "Check SMS for details",
+            expiryTimestamp = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L),
+            language = "am"
+        )
+    }
+
+    private fun parseAwardedBonus(smsBody: String): BalancePackage? {
+        // የ 7.50 ብር ቦነስ ተሸልመዋል
+        val bonusPattern = Regex("""(?:የ\s*)?([\d,]+\.?\d*)\s*ብር\s*ቦነስ""")
+        val match = bonusPattern.find(smsBody) ?: return null
+        val amount = match.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+
+        return BalancePackage(
+            packageType = PackageType.BONUS_FUND,
+            packageName = "Recharge Bonus",
+            totalAmount = amount,
+            remainingAmount = amount,
+            unit = "Birr",
+            source = "Ethio Telecom",
+            validityDays = 3,
+            expiryDate = "Bonus reward",
+            expiryTimestamp = System.currentTimeMillis() + (3 * 24 * 60 * 60 * 1000L),
+            language = "am"
+        )
     }
 
     private fun parseTransactionForSender(smsBody: String, sender: String): Transaction? {

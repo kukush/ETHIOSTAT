@@ -1,6 +1,8 @@
 package com.ethiostat.app.parser
 
+import com.ethiostat.app.data.parser.AmharicSmsParser
 import com.ethiostat.app.data.parser.EnglishSmsParser
+import com.ethiostat.app.data.parser.OromoSmsParser
 import com.ethiostat.app.domain.model.PackageType
 import org.junit.Test
 import org.junit.Assert.*
@@ -15,7 +17,9 @@ import android.util.Log
 @RunWith(RobolectricTestRunner::class)
 class BalanceParsingTest {
     
-    private val parser = EnglishSmsParser()
+    private val enParser = EnglishSmsParser()
+    private val amParser = AmharicSmsParser()
+    private val orParser = OromoSmsParser()
     private var logMock: MockedStatic<Log>? = null
     
     @Before
@@ -38,7 +42,7 @@ class BalanceParsingTest {
         // Sample 1 from user
         val sms = "Dear Customer, Your prepaid account has been recharged successfully. Your Recharged balance is 50.00 Birr. Your balance is 50.01 Birr. Download and use telebirr SuperApp from https://onelink.to/uecbbr and get bonus during airtime & package purchase. Ethio telecom"
         
-        val result = parser.parse(sms, "251994")
+        val result = enParser.parse(sms, "251994")
         assertTrue(result.isParsed)
 
         val accounts = result.packages.filter { it.packageName == "Account Balance" }
@@ -52,7 +56,7 @@ class BalanceParsingTest {
         // Sample 2 from user
         val sms = "Dear Customer, You have been awarded an ETB 7.50 bonus for recharging your prepaid account using telebirr. Thank you! Ethio telecom"
         
-        val result = parser.parse(sms, "251994")
+        val result = enParser.parse(sms, "251994")
         assertTrue(result.isParsed)
 
         val accounts = result.packages.filter { it.packageName == "Account Balance" }
@@ -60,6 +64,42 @@ class BalanceParsingTest {
 
         val bonuses = result.packages.filter { it.packageName == "Recharge Bonus" }
         assertEquals("Should have found recharge bonus", 1, bonuses.size)
+        assertEquals(7.50, bonuses.first().remainingAmount, 0.001)
+    }
+
+    @Test
+    fun `test Amharic account balance parsing`() {
+        val sms = "ቀሪ ሂሳብዎ 50.01 ብር::"
+        val result = amParser.parse(sms, "251994")
+        assertTrue(result.isParsed)
+        val accounts = result.packages.filter { it.packageName == "Account Balance" }
+        assertEquals(50.01, accounts.first().remainingAmount, 0.001)
+    }
+
+    @Test
+    fun `test Amharic bonus award parsing`() {
+        val sms = "የ 7.50 ብር ቦነስ ተሸልመዋል"
+        val result = amParser.parse(sms, "251994")
+        assertTrue(result.isParsed)
+        val bonuses = result.packages.filter { it.packageName == "Recharge Bonus" }
+        assertEquals(7.50, bonuses.first().remainingAmount, 0.001)
+    }
+
+    @Test
+    fun `test Oromo account balance parsing`() {
+        val sms = "Hafteen herregaa amma qabdan Qarshii 13.95 dha."
+        val result = orParser.parse(sms, "251994")
+        assertTrue(result.isParsed)
+        val accounts = result.packages.filter { it.packageName == "Account Balance" }
+        assertEquals(13.95, accounts.first().remainingAmount, 0.001)
+    }
+
+    @Test
+    fun `test Oromo bonus award parsing`() {
+        val sms = "Boonasii Qarshii 7.50 badhaafamtaniittu"
+        val result = orParser.parse(sms, "251994")
+        assertTrue(result.isParsed)
+        val bonuses = result.packages.filter { it.packageName == "Recharge Bonus" }
         assertEquals(7.50, bonuses.first().remainingAmount, 0.001)
     }
 }

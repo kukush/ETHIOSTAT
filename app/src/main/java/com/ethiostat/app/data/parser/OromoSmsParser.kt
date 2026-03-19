@@ -208,29 +208,79 @@ class OromoSmsParser : SmsParser {
     }
     
     private fun parseTelecomMessage(body: String, sender: String): ParsedSmsData {
-        // For telecom messages, we mainly extract balance packages
-        val amount = extractAmount(body) ?: return ParsedSmsData.empty()
+        val packages = mutableListOf<BalancePackage>()
         
-        // Create a simple balance package for telecom services
-        val balancePackage = BalancePackage(
-            packageType = PackageType.BONUS_FUND,
-            remainingAmount = amount,
-            totalAmount = amount,
-            unit = "Birr",
-            source = "Ethio Telecom",
-            packageName = "Telecom Balance",
-            validityDays = 30,
-            expiryDate = "",
-            expiryTimestamp = System.currentTimeMillis() + (30 * 24 * 60 * 60 * 1000L),
-            language = "om"
-        )
+        // 1. Check for specific Account Balance pattern
+        // Sample: "Hafteen herregaa amma qabdan Qarshii 13.95 dha."
+        val balanceMatch = TELEBIRR_OROMO_BALANCE.find(body)
+        if (balanceMatch != null) {
+            val amount = balanceMatch.groupValues[1].replace(",", "").toDoubleOrNull()
+            if (amount != null) {
+                packages.add(BalancePackage(
+                    packageType = PackageType.BONUS_FUND,
+                    packageName = "Account Balance",
+                    remainingAmount = amount,
+                    totalAmount = amount,
+                    unit = "Birr",
+                    source = "Ethio Telecom",
+                    validityDays = 365,
+                    expiryDate = "Check SMS for details",
+                    expiryTimestamp = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L),
+                    language = "om"
+                ))
+            }
+        }
         
-        return ParsedSmsData(
-            isParsed = true,
-            transaction = null,
-            packages = listOf(balancePackage),
-            language = SmsLanguage.OROMO
-        )
+        // 2. Check for Awarded Bonus pattern
+        // Sample: "Boonasii Qarshii 7.50 badhaafamtaniittu"
+        val bonusPattern = Regex("""(?:Boonasii\s+)?Qarshii\s*([\d,]+\.?\d*)\s*(?:badhaafamtaniittu|badhaafamteera)""", RegexOption.IGNORE_CASE)
+        val bonusMatch = bonusPattern.find(body)
+        if (bonusMatch != null) {
+            val amount = bonusMatch.groupValues[1].replace(",", "").toDoubleOrNull()
+            if (amount != null) {
+                packages.add(BalancePackage(
+                    packageType = PackageType.BONUS_FUND,
+                    packageName = "Recharge Bonus",
+                    remainingAmount = amount,
+                    totalAmount = amount,
+                    unit = "Birr",
+                    source = "Ethio Telecom",
+                    validityDays = 3,
+                    expiryDate = "Bonus reward",
+                    expiryTimestamp = System.currentTimeMillis() + (3 * 24 * 60 * 60 * 1000L),
+                    language = "om"
+                ))
+            }
+        }
+        
+        // 3. Fallback: only if nothing specific matched and we find a "Balance/Birr" context
+        if (packages.isEmpty() && (body.contains("hafeen") || body.contains("balansii"))) {
+            extractAmount(body)?.let { amount ->
+                packages.add(BalancePackage(
+                    packageType = PackageType.BONUS_FUND,
+                    remainingAmount = amount,
+                    totalAmount = amount,
+                    unit = "Birr",
+                    source = "Ethio Telecom",
+                    packageName = "Telecom Balance",
+                    validityDays = 30,
+                    expiryDate = "",
+                    expiryTimestamp = System.currentTimeMillis() + (30 * 24 * 60 * 60 * 1000L),
+                    language = "om"
+                ))
+            }
+        }
+        
+        return if (packages.isNotEmpty()) {
+            ParsedSmsData(
+                isParsed = true,
+                transaction = null,
+                packages = packages,
+                language = SmsLanguage.OROMO
+            )
+        } else {
+            ParsedSmsData.empty()
+        }
     }
     
     private fun extractAmount(text: String): Double? {
