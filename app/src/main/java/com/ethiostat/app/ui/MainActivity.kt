@@ -43,6 +43,8 @@ import com.ethiostat.app.ui.settings.AccountSourcesScreen
 import com.ethiostat.app.ui.settings.SettingsIntent
 import com.ethiostat.app.ui.settings.SettingsScreen
 import com.ethiostat.app.ui.settings.SettingsViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.ethiostat.app.ui.theme.EthioStatTheme
 
 class MainActivity : ComponentActivity() {
@@ -88,20 +90,38 @@ class MainActivity : ComponentActivity() {
             )
         )
         
-        val viewModel = DashboardViewModel(
-            repository = repository,
-            getFinancialSummaryUseCase = GetFinancialSummaryUseCase(),
-            syncBalanceUseCase = SyncBalanceUseCase(applicationContext),
-            changeLanguageUseCase = ChangeLanguageUseCase(repository),
-            readTransactionSourceSmsUseCase = ReadTransactionSourceSmsUseCase(
-                repository = repository,
-                context = applicationContext
-            ),
-            syncSmsHistoryUseCase = com.ethiostat.app.domain.usecase.SyncSmsHistoryUseCase(
-                context = applicationContext,
-                repository = repository
-            )
-        )
+        val factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return when {
+                    modelClass.isAssignableFrom(DashboardViewModel::class.java) -> {
+                        DashboardViewModel(
+                            repository = repository,
+                            getFinancialSummaryUseCase = GetFinancialSummaryUseCase(),
+                            syncBalanceUseCase = SyncBalanceUseCase(applicationContext),
+                            changeLanguageUseCase = ChangeLanguageUseCase(repository),
+                            readTransactionSourceSmsUseCase = ReadTransactionSourceSmsUseCase(
+                                repository = repository,
+                                context = applicationContext
+                            ),
+                            syncSmsHistoryUseCase = com.ethiostat.app.domain.usecase.SyncSmsHistoryUseCase(
+                                context = applicationContext,
+                                repository = repository
+                            )
+                        ) as T
+                    }
+                    modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
+                        SettingsViewModel(
+                            changeLanguageUseCase = ChangeLanguageUseCase(repository),
+                            context = applicationContext
+                        ) as T
+                    }
+                    else -> throw IllegalArgumentException("Unknown ViewModel class")
+                }
+            }
+        }
+
+        val viewModel = ViewModelProvider(this, factory).get(DashboardViewModel::class.java)
+        val settingsViewModel = ViewModelProvider(this, factory).get(SettingsViewModel::class.java)
         
         // Start auto-sync if permissions are already granted
         if (hasAllPermissions()) {
@@ -110,14 +130,6 @@ class MainActivity : ComponentActivity() {
             startSmsMonitoringService()
         }
         
-        val prefs = getSharedPreferences("ethiostat_prefs", Context.MODE_PRIVATE)
-        val initialThemeKey = prefs.getString("theme_mode", ThemeMode.SYSTEM.key) ?: ThemeMode.SYSTEM.key
-        val initialTheme = ThemeMode.fromKey(initialThemeKey)
-
-        val settingsViewModel = SettingsViewModel(
-            changeLanguageUseCase = ChangeLanguageUseCase(repository),
-            context = applicationContext
-        )
         settingsViewModel.loadThemeMode()
 
         setContent {
