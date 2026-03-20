@@ -146,7 +146,7 @@ class MainActivity : ComponentActivity() {
                     key(dashboardState.currentLanguage) {
                         when {
                             showAccountSources -> {
-                                AccountSourcesScreen(
+                        AccountSourcesScreen(
                                     accountSources = dashboardState.accountSources,
                                     onAddSource = { source ->
                                         viewModel.processIntent(DashboardIntent.AddAccountSource(source))
@@ -160,7 +160,15 @@ class MainActivity : ComponentActivity() {
                                     onToggleSource = { source ->
                                         viewModel.processIntent(DashboardIntent.ToggleAccountSource(source))
                                     },
-                                    onNavigateBack = { 
+                                    onResetTransactions = { source, fromTimestamp ->
+                                        viewModel.processIntent(
+                                            DashboardIntent.ResetTransactionsForSource(
+                                                accountSourceType = source.type.name,
+                                                fromTimestamp = fromTimestamp
+                                            )
+                                        )
+                                    },
+                                    onNavigateBack = {
                                         showAccountSources = false
                                         showSettings = true
                                     }

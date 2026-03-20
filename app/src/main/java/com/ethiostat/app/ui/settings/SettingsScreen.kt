@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,12 +32,12 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cancel)
                         )
                     }
                 },
@@ -86,14 +87,14 @@ private fun AppearanceSection(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Appearance",
+                text = stringResource(R.string.appearance),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             val modes = listOf(
-                ThemeMode.DARK to "Dark",
-                ThemeMode.LIGHT to "Light",
-                ThemeMode.SYSTEM to "Follow System"
+                ThemeMode.DARK to stringResource(R.string.dark_mode),
+                ThemeMode.LIGHT to stringResource(R.string.light_mode),
+                ThemeMode.SYSTEM to stringResource(R.string.system_default)
             )
             modes.forEach { (mode, label) ->
                 Row(
@@ -134,15 +135,15 @@ private fun LanguageSection(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Language",
+                text = stringResource(R.string.language),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             
             val languages = listOf(
-                AppLanguage.ENGLISH to "English",
-                AppLanguage.AMHARIC to "አማርኛ (Amharic)",
-                AppLanguage.OROMIFFA to "Afaan Oromoo (Oromo)"
+                AppLanguage.ENGLISH to stringResource(R.string.english),
+                AppLanguage.AMHARIC to stringResource(R.string.amharic),
+                AppLanguage.OROMIFFA to stringResource(R.string.oromiffa)
             )
             
             languages.forEach { (language, displayName) ->
@@ -193,7 +194,7 @@ private fun TransactionSection(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Transactions",
+                    text = stringResource(R.string.transactions),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -208,11 +209,11 @@ private fun TransactionSection(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Show net balance",
+                        text = stringResource(R.string.show_net_balance),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "Display net balance in transaction summary",
+                        text = stringResource(R.string.show_net_balance_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -234,11 +235,11 @@ private fun TransactionSection(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Transaction sources",
+                        text = stringResource(R.string.transaction_sources),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "Manage Telebirr, banks, and other sources",
+                        text = stringResource(R.string.manage_telebirr_banks_sources),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -246,7 +247,7 @@ private fun TransactionSection(
                 IconButton(onClick = onNavigateToAccountSources) {
                     Icon(
                         Icons.Default.ChevronRight,
-                        contentDescription = "Manage sources"
+                        contentDescription = stringResource(R.string.transaction_sources)
                     )
                 }
             }

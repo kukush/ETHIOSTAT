@@ -16,6 +16,13 @@ class EnglishSmsParser : SmsParser {
         setOf(RegexOption.IGNORE_CASE)
     )
 
+    // Pattern for SMS package segments in *804# response:
+    // "from Create Your Own Package Monthly is 157 SMS with expiry date on 2026-04-19 at 00:22:19"
+    private val smsPackageSegmentPattern = Regex(
+        """from\s+(.+?)\s+is\s+(\d+)\s+SMS\s+with\s+expiry\s+date\s+on\s+(\d{4}-\d{2}-\d{2})\s+at\s+(\d{2}:\d{2}:\d{2})""",
+        setOf(RegexOption.IGNORE_CASE)
+    )
+
     private val packageNamePattern = Regex(
         """(Monthly\s+Internet\s+Package\s+[\d.]+\s*(?:GB|MB)|Monthly\s+voice\s+\d+\s*Min|Weekly\s+Youth\s+[\d.]+GB|[\d.]+\s*Min\s+night\s+package\s+bonus)\s+from\s+(telebirr|tele\s+birr)""",
         RegexOption.IGNORE_CASE
@@ -41,8 +48,9 @@ class EnglishSmsParser : SmsParser {
         RegexOption.IGNORE_CASE
     )
 
-    // Account balance in Birr from the first *804# response fragment
-    // FIX: More specific pattern to avoid matching "Recharged balance" 
+    // Account balance in Birr from recharge SMS sender 251994
+    // FIX: Use findAll() and take LAST match to skip "Your Recharged balance is X"
+    // and correctly capture "Your balance is Y" (the actual current balance)
     private val accountBalanceBirrPattern = Regex(
         """Your\s+(?:total\s+)?balance\s+is\s+([\d,]+\.?\d*)\s*Birr""",
         RegexOption.IGNORE_CASE
@@ -212,6 +220,34 @@ class EnglishSmsParser : SmsParser {
 
         for (segment in segments) {
             Log.d("EthioStat", "parseMultiPackageRaw: Segment = ${segment.take(100)}")
+
+            // --- Check for SMS package segment (e.g. "from Create Your Own Package Monthly is 157 SMS with expiry date on 2026-04-19 at 00:22:19") ---
+            val smsMatch = smsPackageSegmentPattern.find(segment)
+            if (smsMatch != null) {
+                val packageDesc = smsMatch.groupValues[1].trim()
+                val smsCount = smsMatch.groupValues[2].toDoubleOrNull() ?: 0.0
+                val expiryDate = smsMatch.groupValues[3]
+                val expiryTime = smsMatch.groupValues[4]
+                val expiryTimestamp = parseExpiryTimestamp("$expiryDate $expiryTime")
+                Log.d("EthioStat", "parseMultiPackageRaw: SMS segment matched: $packageDesc, count=$smsCount, expiry=$expiryDate $expiryTime")
+                packages.add(
+                    BalancePackage(
+                        packageType = PackageType.SMS,
+                        packageName = packageDesc.take(60).trim().ifEmpty { "SMS Package" },
+                        totalAmount = smsCount,
+                        remainingAmount = smsCount,
+                        unit = "SMS",
+                        source = "telebirr",
+                        validityDays = calculateDaysUntil(expiryTimestamp),
+                        expiryDate = "$expiryDate at $expiryTime",
+                        expiryTimestamp = expiryTimestamp,
+                        language = "en"
+                    )
+                )
+                continue  // SMS segment handled — skip normal multiPackagePattern matching for this segment
+            }
+
+            // --- Normal internet/voice package segments ---
             val matches = multiPackagePattern.findAll(segment).toList()
             Log.d("EthioStat", "parseMultiPackageRaw: Found ${matches.size} matches in segment")
 
@@ -775,10 +811,13 @@ class EnglishSmsParser : SmsParser {
     )
 
     private fun parseAccountBalanceBirr(smsBody: String): BalancePackage? {
-        val match = accountBalanceBirrPattern.find(smsBody) ?: return null
+        // Use findAll() + takeLast to avoid matching "Your Recharged balance is X"
+        // and instead capture the final "Your balance is Y" (actual current balance).
+        val allMatches = accountBalanceBirrPattern.findAll(smsBody).toList()
+        val match = allMatches.lastOrNull() ?: return null
         val amount = match.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
 
-        Log.d("EthioStat", "Parsed account balance: $amount Birr")
+        Log.d("EthioStat", "Parsed account balance (last match): $amount Birr (total matches found: ${allMatches.size})")
 
         return BalancePackage(
             packageType = PackageType.MAIN_BALANCE,

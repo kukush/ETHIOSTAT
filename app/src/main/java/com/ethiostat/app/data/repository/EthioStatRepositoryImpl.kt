@@ -285,4 +285,12 @@ class EthioStatRepositoryImpl(
     override suspend fun insertUnreadMessage(message: UnreadMessage): Long {
         return unreadMessageDao.insertMessage(message.toEntity())
     }
+
+    override suspend fun deleteTransactionsBySourceSince(accountSourceType: String, fromTimestamp: Long) {
+        transactionDao.deleteTransactionsByAccountSourceSince(accountSourceType, fromTimestamp)
+    }
+
+    override suspend fun deleteAllTransactionsBySource(accountSourceType: String) {
+        transactionDao.deleteTransactionsByAccountSource(accountSourceType)
+    }
 }

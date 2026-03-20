@@ -11,35 +11,36 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
+/**
+ * Handles USSD-based telecom data refresh (e.g., *804# for package/balance info).
+ *
+ * NOTE: SMS balance (*999*3*5#) has been removed — SMS count is now parsed directly
+ * from the *804# response SMS message received from sender 251994.
+ */
 class SyncBalanceUseCase(
     private val context: Context
 ) {
     companion object {
         private const val TELECOM_USSD_CODE = "*804#"
-        private const val SMS_BALANCE_USSD = "*999*3*5#"
     }
 
-    suspend fun checkSmsBalance(): Result<String> {
-        return sendDirectUssdRequest(SMS_BALANCE_USSD)
-    }
-
-    // Specific method for telecom service data refresh
+    // Specific method for telecom service data refresh (*804#)
     suspend fun refreshTelecomData(): Result<String> {
         return sendDirectUssdRequest(TELECOM_USSD_CODE)
     }
-    
+
     @RequiresPermission(Manifest.permission.CALL_PHONE)
     suspend fun sendDirectUssdRequest(ussdCode: String): Result<String> = suspendCancellableCoroutine { continuation ->
         try {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) 
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE)
                 != PackageManager.PERMISSION_GRANTED) {
                 continuation.resume(Result.failure(SecurityException("CALL_PHONE permission not granted")))
                 return@suspendCancellableCoroutine
             }
-            
+
             val manager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
             val handler = Handler(Looper.getMainLooper())
-            
+
             val callback = object : TelephonyManager.UssdResponseCallback() {
                 override fun onReceiveUssdResponse(
                     telephonyManager: TelephonyManager?,
@@ -63,7 +64,7 @@ class SyncBalanceUseCase(
                     }
                 }
             }
-            
+
             manager.sendUssdRequest(ussdCode, callback, handler)
         } catch (e: Exception) {
             if (continuation.isActive) {

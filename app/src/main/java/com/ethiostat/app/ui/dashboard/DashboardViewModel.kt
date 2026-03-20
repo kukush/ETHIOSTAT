@@ -61,6 +61,7 @@ class DashboardViewModel(
             is DashboardIntent.MarkMessageAsRead -> markMessageAsRead(intent.messageId)
             is DashboardIntent.MarkAllMessagesAsRead -> markAllMessagesAsRead()
             is DashboardIntent.ClearError -> clearError()
+            is DashboardIntent.ResetTransactionsForSource -> resetTransactionsForSource(intent.accountSourceType, intent.fromTimestamp)
         }
     }
     
@@ -143,43 +144,25 @@ class DashboardViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                // 1. Execute *804# which will trigger an incoming SMS from Ethio Telecom
+                // Execute *804# — triggers an incoming SMS from Ethio Telecom that is
+                // processed by SmsReceiver and parsed by EnglishSmsParser (including SMS count)
                 val result804 = syncBalanceUseCase.refreshTelecomData()
-                
-                // 1.5 Fallback to scanning SMS history if USSD message wasn't immediately received
+
+                // Fallback: if USSD response failed, scan SMS history
                 if (result804.isFailure) {
                     android.util.Log.d("EthioStat", "USSD refresh failed, falling back to history scan")
-                    syncSmsHistoryUseCase(7)
+                    syncSmsHistoryUseCase(forceFullScan = false)
                 }
-                
-                // 2. Execute *999*3*5# safely
-                val resultSms = syncBalanceUseCase.checkSmsBalance()
-                if (resultSms.isSuccess) {
-                    val message = resultSms.getOrNull() ?: ""
-                    // Try to extract any number near "SMS", "msg", or just take the largest number
-                    val numberMatch = Regex("(?i)(\\d+)[\\s]*(sms|msg|message)").find(message)
-                        ?: Regex("(\\d+)(?!\\d)").find(message) // Fallback to last number in string
-                        
-                    val amount = numberMatch?.groupValues?.get(1)?.toDoubleOrNull()
-                    if (amount != null && amount >= 0) {
-                        val newSmsPkg = BalancePackage.createZeroSms().copy(
-                            remainingAmount = amount,
-                            totalAmount = amount,
-                            expiryDate = "Valid"
-                        )
-                        repository.insertBalance(newSmsPkg)
-                    }
-                }
-                
+
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        syncSuccess = result804.isSuccess || resultSms.isSuccess,
-                        error = result804.exceptionOrNull()?.message ?: resultSms.exceptionOrNull()?.message
+                        syncSuccess = result804.isSuccess,
+                        error = result804.exceptionOrNull()?.message
                     )
                 }
-                
-                if (result804.isSuccess || resultSms.isSuccess) {
+
+                if (result804.isSuccess) {
                     loadData()
                 }
             } catch (e: Exception) {
@@ -210,12 +193,23 @@ class DashboardViewModel(
     private fun refreshTelecomDataOnStart() {
         viewModelScope.launch {
             try {
-                // Small delay to ensure app is fully loaded
-                kotlinx.coroutines.delay(2000)
+                // Trigger *804# USSD for live telecom data immediately
                 syncBalanceUseCase.refreshTelecomData()
+
+                // Small delay then scan history
+                kotlinx.coroutines.delay(1000)
+                syncSmsHistoryUseCase(forceFullScan = false)
+
+                // Scan transaction sources
+                val sources = _state.value.accountSources
+                if (sources.isNotEmpty()) {
+                    readTransactionSourceSmsUseCase.invoke(sources)
+                }
+                
+                // Final load to ensure all counts are updated
+                loadData()
             } catch (e: Exception) {
-                // Silently handle errors on startup to avoid disrupting user experience
-                android.util.Log.w("DashboardViewModel", "Failed to refresh telecom data on start: ${e.message}")
+                android.util.Log.w("DashboardViewModel", "Failed startup sync: ${e.message}")
             }
         }
     }
@@ -503,7 +497,7 @@ class DashboardViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val result = syncSmsHistoryUseCase(30) // Scan last 30 days
+                val result = syncSmsHistoryUseCase(forceFullScan = true) // Force full 14-day scan
                 _state.update {
                     it.copy(
                         isLoading = false,
@@ -519,6 +513,36 @@ class DashboardViewModel(
                     it.copy(
                         isLoading = false,
                         error = "Scanner failed: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Resets (deletes) transactions for a specific account source starting from [fromTimestamp].
+     * If [fromTimestamp] is 0L, deletes ALL transactions for that source.
+     * After deletion, recalculates the financial summary and updates the UI.
+     */
+    private fun resetTransactionsForSource(accountSourceType: String, fromTimestamp: Long) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            try {
+                if (fromTimestamp == 0L) {
+                    repository.deleteAllTransactionsBySource(accountSourceType)
+                    android.util.Log.d("EthioStat", "Reset ALL transactions for $accountSourceType")
+                } else {
+                    repository.deleteTransactionsBySourceSince(accountSourceType, fromTimestamp)
+                    android.util.Log.d("EthioStat", "Reset transactions for $accountSourceType since $fromTimestamp")
+                }
+                _state.update { it.copy(isLoading = false, syncSuccess = true) }
+                loadData() // Recalculate summary and update UI
+            } catch (e: Exception) {
+                android.util.Log.e("EthioStat", "resetTransactionsForSource error: ${e.message}")
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Reset failed: ${e.message}"
                     )
                 }
             }

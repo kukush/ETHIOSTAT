@@ -14,7 +14,12 @@
     <string name="bonus_funds">ጉርሻ ገንዘብ</string>
     <string name="night_bonus">የሌሊት ጉርሻ</string>
     <string name="promotion">ፕሮሞሽን</string>
+    <string name="sms_balance">የኤስኤምኤስ ቀሪ</string>
     <string name="telecom_service">የቴሌኮም አገልግሎት</string>
+    <string name="internet">ኢንተርኔት</string>
+    <string name="voice">ድምፅ</string>
+    <string name="bonus">ጉርሻ</string>
+    <string name="sms">ኤስኤምኤስ</string>
     
     <!-- Actions -->
     <string name="sync_now">አሁን አመሳስል</string>
@@ -85,6 +90,12 @@
     <string name="error_occurred">ስህተት ተከስቷል</string>
     <string name="sync_success">ማመሳሰል ተሳክቷል</string>
     <string name="settings_saved">ቅንብሮች ተቀምጠዋል</string>
+    <string name="no_data_available">ምንም የቀሪ መረጃ የለም</string>
+    <string name="sync_to_load">ቀሪ ሂሳብዎን ለማየት Sync ይጫኑ</string>
+    <string name="tap_sync_or_scan">የማመሳሰል ምልክቱን ይጫኑ ወይም መረጃዎን ይቃኙ</string>
+    <string name="scan_inbox">የኤስኤምኤስ ሳጥን ቃኝ</string>
+    <string name="dismiss">አጥፋ</string>
+    <string name="ok">እሺ</string>
     
     <!-- Permissions -->
     <string name="permission_sms_required">የሂሳብ መልዕክቶችን ለማንበብ የኤስኤምኤስ ፈቃድ ያስፈልጋል</string>
@@ -101,4 +112,26 @@
     <string name="enter_sender_name">የላኪ ስም ወይም ቁጥር ያስገቡ</string>
     <string name="invalid_ussd_code">ልክ ያልሆነ የዩኤስኤስዲ ኮድ ቅርጸት</string>
     <string name="confirm_reset">ወደ ነባሪ ቅንብሮች መልስ?</string>
+    
+    <!-- Transaction Sources -->
+    <string name="transaction_sources">የግብይት ምንጮች</string>
+    <string name="manage_sources">የግብይት ምንጮችን ያስተዳድሩ (%1$d/6)</string>
+    <string name="max_sources_reached">ከፍተኛው 6 የሚፈቀድ ምንጭ ደርሰዋል። ሌላ ለመጨመር አንዱን ያጥፉ።</string>
+    <string name="no_sources_configured">ምንም የግብይት ምንጮች አልተዋቀሩም</string>
+    <string name="add_sources_to_track">ከባንክ እና ከሞባይል ገንዘብ ግብይቶችን ለመከታተል ምንጮችን ይጨምሩ</string>
+    <string name="reset_transactions">ግብይቶችን መልስ/አጥፋ</string>
+    <string name="delete_all">ሁሉንም አጥፋ</string>
+    <string name="reset_from_date">ከተወሰነ ቀን ጀምሮ አጥፋ</string>
+    <string name="display_name">የሚታይ ስም</string>
+    <string name="source_type">የምንጭ አይነት</string>
+    <string name="phone_number_sender">የስልክ ቁጥር/ላኪ</string>
+    <string name="delete_transactions_for">ለ \"%1$s\" ከተመረጠው ቀን ጀምሮ ግብይቶችን ያጥፉ።</string>
+    <string name="transactions_on_after_date">ከዚህ ቀን ጀምሮ ያሉት ግብይቶች ይሰረዛሉ።</string>
+    <string name="add_transaction_source">የግብይት ምንጭ ጨምር</string>
+    <string name="edit_transaction_source">የግብይት ምንጭ አሻሽል</string>
+    <string name="show_net_balance">የተጣራ ቀሪን አሳይ</string>
+    <string name="show_net_balance_description">የተጣራ ቀሪ ሂሳብን በግብይት ማጠቃለያ ላይ ያሳየዎታል</string>
+    <string name="manage_telebirr_banks_sources">ቴሌብርን፣ ባንኮችን እና ሌሎች ምንጮችን ያስተዳድሩ</string>
+    <string name="transactions">ግብይቶች</string>
+    <string name="all_sources">ሁሉም ምንጮች</string>
 </resources>

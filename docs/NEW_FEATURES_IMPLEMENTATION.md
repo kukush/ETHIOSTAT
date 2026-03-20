@@ -7,7 +7,17 @@ This document summarizes the implementation of three major feature requests for 
 2. **Oromo Language Support**
 3. **Unread Message Indicator System**
 
-## ✅ **Feature 1: Transaction Source Cards with SMS History Reading**
+## ✅ **Feature 1: Enhanced Balance and Transaction Management**
+
+### **What was implemented:**
+- **Accurate Primary Balance Parsing**: Fixed regex issues that caused the app to incorrectly read "Recharged balance" instead of the actual current balance.
+- **First-Run Automatic Scanning**: Upon first opening the app, it now automatically scans the past 14 days of SMS history to establish an accurate starting balance, and 7 days of history for default transaction sources.
+- **SMS-based Package Discovery**: Removed the reliance on the flaky `*999*3*5#` USSD code. The app now accurately excerpts the user's SMS package balance directly from the `*804#` multi-package response message.
+- **Expanded Source Tracking**: Increased the limit of active transaction sources from 3 to 6.
+- **Transaction Reset Functionality**: Added the ability to clear transaction history for a specific source from a chosen date, or delete all transactions for a source completely.
+- **Refreshed Grid UI**: Redesigned the transaction sources settings page to use a dense, 3-column grid layout with compact cards.
+
+## ✅ **Feature 2: Transaction Source Cards with SMS History Reading**
 
 ### **What was implemented:**
 - **Separate Transaction Cards**: Each configured transaction source (CBE, Telebirr, Awash, Zemen) now displays as individual cards

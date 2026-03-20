@@ -17,10 +17,12 @@ cd ethiostat
 ## 🌟 Key Features
 
 - **Real-time SMS Parsing** - Automatically extracts balance information from Ethio telecom and telebirr SMS
+- **Complete Package Parsing** - Identifies and tracks all your internet, voice, SMS, and bonus packages.
 - **Beautiful Dashboard** - Color-coded cards for Internet, Voice, and Bonus packages
-- **Multilingual Support** - Full support for English and Amharic
+- **Transaction Manager** - Automatically tracks your banks and mobile money services on up to 6 simultaneous configurable sources. Clear / reset transactions by date as needed.
+- **Multilingual Support** - Full support for English, Amharic, and Oromo.
 - **Privacy First** - 100% offline, no internet connectivity required
-- **USSD Integration** - One-tap sync via *805# for balance check
+- **USSD Integration** - One-tap sync via *804# for an integrated multi-package balance check
 
 ## 📚 Documentation
 

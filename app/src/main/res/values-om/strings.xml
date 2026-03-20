@@ -14,7 +14,12 @@
     <string name="bonus_funds">Dhiyeessa Bonoosaa</string>
     <string name="night_bonus">Bonoosaa Ganda</string>
     <string name="promotion">Agarsiisa</string>
+    <string name="sms_balance">Qabxii SMS</string>
     <string name="telecom_service">Seerivii Telekomii</string>
+    <string name="internet">Intarneetii</string>
+    <string name="voice">Sagalee</string>
+    <string name="bonus">Bonoosaa</string>
+    <string name="sms">SMS</string>
     
     <!-- Actions -->
     <string name="sync_now">Synchronize Kana</string>
@@ -87,6 +92,12 @@
     <string name="error_occurred">Dogoggora uumame</string>
     <string name="sync_success">Synchronize success</string>
     <string name="settings_saved">Filannoo galchame</string>
+    <string name="no_data_available">Odeeffannoon hin jiru</string>
+    <string name="sync_to_load">Paakeejii baruuf Sync guddnadhaa</string>
+    <string name="tap_sync_or_scan">Mallattoo sync tuqi ykn SMS barbaadi</string>
+    <string name="scan_inbox">SMS barbaadi</string>
+    <string name="dismiss">Dhiisi</string>
+    <string name="ok">Ok</string>
     
     <!-- Permissions -->
     <string name="permission_sms_required">SMS permission is required to read balance messages</string>
@@ -103,4 +114,9 @@
     <string name="enter_sender_name">Maqaan ykn lakkoofsi ergaa galchi</string>
     <string name="invalid_ussd_code">Formatii koodii USSD dogoggora</string>
     <string name="confirm_reset">Deebii qabxii fudhaa?</string>
+    <string name="show_net_balance">Qabxii Netii agarsiisi</string>
+    <string name="show_net_balance_description">Qabxii netii summary gabaabaa irratti agarsiisi</string>
+    <string name="manage_telebirr_banks_sources">Telebirr, bankoota fi kkf guddinadhaa</string>
+    <string name="transactions">Balleessaa</string>
+    <string name="all_sources">Madda Hunda</string>
 </resources>

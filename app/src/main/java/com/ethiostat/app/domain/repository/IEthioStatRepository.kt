@@ -71,6 +71,17 @@ interface IEthioStatRepository {
     suspend fun getLastReadSmsTimestamp(phoneNumber: String): Long?
     
     suspend fun updateLastReadSmsTimestamp(phoneNumber: String, timestamp: Long)
+
+    /**
+     * Delete transactions for the given [AccountSourceType] name from [fromTimestamp] onwards.
+     * Used by the reset/clear functionality in Settings.
+     */
+    suspend fun deleteTransactionsBySourceSince(accountSourceType: String, fromTimestamp: Long)
+
+    /**
+     * Delete ALL transactions for the given [AccountSourceType] name (full source reset).
+     */
+    suspend fun deleteAllTransactionsBySource(accountSourceType: String)
 }
 
 data class AppConfig(

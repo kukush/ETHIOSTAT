@@ -28,4 +28,12 @@ sealed class DashboardIntent {
     object MarkAllMessagesAsRead : DashboardIntent()
     object ScanSmsHistory : DashboardIntent()
     object ClearError : DashboardIntent()
+    /**
+     * Reset (delete) transactions for a specific [accountSourceType] (enum name string)
+     * from [fromTimestamp] onwards. Pass fromTimestamp = 0L to delete ALL transactions for source.
+     */
+    data class ResetTransactionsForSource(
+        val accountSourceType: String,
+        val fromTimestamp: Long
+    ) : DashboardIntent()
 }

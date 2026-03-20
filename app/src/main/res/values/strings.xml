@@ -16,6 +16,10 @@
     <string name="promotion">Promotion</string>
     <string name="sms_balance">SMS Balance</string>
     <string name="telecom_service">Telecom Service</string>
+    <string name="internet">Internet</string>
+    <string name="voice">Voice</string>
+    <string name="bonus">Bonus</string>
+    <string name="sms">SMS</string>
     
     <!-- Actions -->
     <string name="sync_now">Sync Now</string>
@@ -89,6 +93,12 @@
     <string name="error_occurred">An error occurred</string>
     <string name="sync_success">Sync successful</string>
     <string name="settings_saved">Settings saved</string>
+    <string name="no_data_available">No balance data available</string>
+    <string name="sync_to_load">Tap Sync to load your balances</string>
+    <string name="tap_sync_or_scan">Tap the sync icon or scan your inbox</string>
+    <string name="scan_inbox">Scan SMS Inbox</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="ok">OK</string>
     
     <!-- Permissions -->
     <string name="permission_sms_required">SMS permission is required to read balance messages</string>
@@ -105,4 +115,26 @@
     <string name="enter_sender_name">Enter sender name or number</string>
     <string name="invalid_ussd_code">Invalid USSD code format</string>
     <string name="confirm_reset">Reset to default settings?</string>
+    
+    <!-- Transaction Sources -->
+    <string name="transaction_sources">Transaction Sources</string>
+    <string name="manage_sources">Manage transaction sources (%1$d/6)</string>
+    <string name="max_sources_reached">Maximum of 6 enabled sources reached. Disable one to add another.</string>
+    <string name="no_sources_configured">No transaction sources configured</string>
+    <string name="add_sources_to_track">Add sources to track transactions from banks and mobile money services</string>
+    <string name="reset_transactions">Reset Transactions</string>
+    <string name="delete_all">Delete All</string>
+    <string name="reset_from_date">Reset from Date</string>
+    <string name="display_name">Display Name</string>
+    <string name="source_type">Source Type</string>
+    <string name="phone_number_sender">Phone Number/Sender</string>
+    <string name="delete_transactions_for">Delete transactions for \"%1$s\" from a chosen date onwards.</string>
+    <string name="transactions_on_after_date">Transactions on or after this date will be removed.</string>
+    <string name="add_transaction_source">Add Transaction Source</string>
+    <string name="edit_transaction_source">Edit Transaction Source</string>
+    <string name="show_net_balance">Show net balance</string>
+    <string name="show_net_balance_description">Display net balance in transaction summary</string>
+    <string name="manage_telebirr_banks_sources">Manage Telebirr, banks, and other sources</string>
+    <string name="transactions">Transactions</string>
+    <string name="all_sources">All Sources</string>
 </resources>

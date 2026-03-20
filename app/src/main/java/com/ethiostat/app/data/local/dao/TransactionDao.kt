@@ -45,4 +45,18 @@ interface TransactionDao {
     
     @Query("DELETE FROM transactions")
     suspend fun deleteAllTransactions()
+
+    /**
+     * Delete transactions for a given account source type (enum name string)
+     * that have a timestamp >= [fromTimestamp].
+     * Used by the reset/clear functionality in Settings.
+     */
+    @Query("DELETE FROM transactions WHERE accountSource = :accountSource AND timestamp >= :fromTimestamp")
+    suspend fun deleteTransactionsByAccountSourceSince(accountSource: String, fromTimestamp: Long)
+
+    /**
+     * Delete ALL transactions for a given account source type (full reset).
+     */
+    @Query("DELETE FROM transactions WHERE accountSource = :accountSource")
+    suspend fun deleteTransactionsByAccountSource(accountSource: String)
 }

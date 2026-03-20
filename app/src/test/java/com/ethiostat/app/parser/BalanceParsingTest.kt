@@ -102,4 +102,61 @@ class BalanceParsingTest {
         val bonuses = result.packages.filter { it.packageType == PackageType.BONUS_FUND }
         assertEquals(7.50, bonuses.first().remainingAmount, 0.001)
     }
+
+    @Test
+    fun `test recharge message returns last balance not recharged balance`() {
+        // Bug regression: "Your Recharged balance is 50.00" should NOT be returned;
+        // "Your balance is 50.01" (the final balance) should be used instead.
+        val sms = "Dear Customer, Your prepaid account has been recharged successfully. " +
+                "Your Recharged balance is 50.00 Birr. Your balance is 50.01 Birr. " +
+                "Download and use telebirr SuperApp from https://onelink.to/uecbbr " +
+                "and get bonus during airtime & package purchase. Ethio telecom"
+
+        val result = enParser.parse(sms, "251994")
+        assertTrue("SMS should be parsed", result.isParsed)
+
+        val accounts = result.packages.filter { it.packageType == PackageType.MAIN_BALANCE }
+        assertEquals("Should have exactly one MAIN_BALANCE", 1, accounts.size)
+        assertEquals(
+            "Balance must be 50.01 (final 'Your balance is'), not 50.00 (recharged balance)",
+            50.01, accounts.first().remainingAmount, 0.001
+        )
+    }
+
+    @Test
+    fun `test 804 response with SMS package segment is parsed correctly`() {
+        // Full *804# response SMS from sender 251994 containing internet, voice, and SMS segments
+        val sms = "Dear Customer, your remaining amount  from Monthly Internet Package 12GB " +
+                "from telebirr to be expired after 30 days is 2735.426 MB with expiry date on " +
+                "2026-04-06 at 17:38:02;  from Monthly voice 150 Min from telebirr to be expired " +
+                "after 30 days and 76 Min night package bonus valid for 30 days is 99 minute and " +
+                "43 second with expiry date on 2026-04-10 at 11:08:07;   from Monthly voice 150 Min " +
+                "from telebirr to be expired after 30 days and 76 Min night package bonus valid for " +
+                "30 days is 76 minute and 0 second with expiry date on 2026-04-10 at 11:08:07;     " +
+                "from Create Your Own Package Monthly is 157 SMS with expiry date on " +
+                "2026-04-19 at 00:22:19;  from Monthly Internet package 4.8 GB from telebirr to be " +
+                "expired after 30days is 4915.200 MB with expiry date on 2026-04-08 at 15:06:16;   " +
+                "Enjoy 10% additional rewards by downloading telebirr SuperApp " +
+                "https://bit.ly/telebirr_SuperApp. Happy Holiday! Ethio telecom."
+
+        val result = enParser.parse(sms, "251994")
+        assertTrue("SMS should be parsed", result.isParsed)
+
+        // Verify SMS package was found
+        val smsPackages = result.packages.filter { it.packageType == PackageType.SMS }
+        assertEquals("Should have exactly one SMS package", 1, smsPackages.size)
+
+        val smsPkg = smsPackages.first()
+        assertEquals("SMS count should be 157", 157.0, smsPkg.remainingAmount, 0.001)
+        assertEquals("SMS unit should be 'SMS'", "SMS", smsPkg.unit)
+        assertTrue("SMS expiry should contain 2026-04-19", smsPkg.expiryDate.contains("2026-04-19"))
+
+        // Verify internet packages are still parsed
+        val internetPackages = result.packages.filter { it.packageType == PackageType.INTERNET }
+        assertTrue("Should have internet packages", internetPackages.isNotEmpty())
+
+        // Verify voice packages are still parsed
+        val voicePackages = result.packages.filter { it.packageType == PackageType.VOICE }
+        assertTrue("Should have voice packages", voicePackages.isNotEmpty())
+    }
 }
