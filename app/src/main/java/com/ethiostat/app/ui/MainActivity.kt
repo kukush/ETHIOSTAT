@@ -106,7 +106,8 @@ class MainActivity : ComponentActivity() {
                             syncSmsHistoryUseCase = com.ethiostat.app.domain.usecase.SyncSmsHistoryUseCase(
                                 context = applicationContext,
                                 repository = repository
-                            )
+                            ),
+                            context = applicationContext
                         ) as T
                     }
                     modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {

@@ -18,7 +18,7 @@ import com.ethiostat.app.data.local.entity.*
         UnreadMessageEntity::class,
         LastReadSmsEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class EthioStatDatabase : RoomDatabase() {

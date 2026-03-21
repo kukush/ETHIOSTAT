@@ -361,7 +361,7 @@ class EnglishSmsParser : SmsParser {
                 source = sender,
                 description = "CBE Account Debited",
                 timestamp = System.currentTimeMillis(),
-                accountSource = AccountSourceType.BANK_CBE,
+                accountSource = AccountSourceType.CBE,
                 sourcePhoneNumber = sender,
                 isClassified = true
             )
@@ -377,7 +377,7 @@ class EnglishSmsParser : SmsParser {
                 source = sender,
                 description = "CBE Account Credited",
                 timestamp = System.currentTimeMillis(),
-                accountSource = AccountSourceType.BANK_CBE,
+                accountSource = AccountSourceType.CBE,
                 sourcePhoneNumber = sender,
                 isClassified = true
             )
@@ -397,7 +397,7 @@ class EnglishSmsParser : SmsParser {
                 source = sender,
                 description = "BOA Account Credited",
                 timestamp = System.currentTimeMillis(),
-                accountSource = AccountSourceType.BANK_BOA,
+                accountSource = AccountSourceType.BOA,
                 sourcePhoneNumber = sender,
                 isClassified = true
             )
@@ -413,7 +413,7 @@ class EnglishSmsParser : SmsParser {
                 source = sender,
                 description = "BOA Account Debited",
                 timestamp = System.currentTimeMillis(),
-                accountSource = AccountSourceType.BANK_BOA,
+                accountSource = AccountSourceType.BOA,
                 sourcePhoneNumber = sender,
                 isClassified = true
             )

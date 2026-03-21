@@ -207,7 +207,7 @@ data class Transaction(
 ```kotlin
 data class AccountSource(
     val name: String,                  // "TeleBirr", "CBE", "Awash"
-    val type: AccountSourceType,       // TELEBIRR, BANK_CBE, BANK_AWASH
+    val type: AccountSourceType,       // TELEBIRR, CBE, BANK_AWASH
     val phoneNumber: String,           // "830", "CBE", "AWASH"
     val displayName: String,
     val isEnabled: Boolean
@@ -215,7 +215,7 @@ data class AccountSource(
 
 enum class AccountSourceType {
     TELEBIRR,
-    BANK_CBE,
+    CBE,
     BANK_AWASH,
     BANK_OTHER,
     TELECOM  // NOT used for transactions

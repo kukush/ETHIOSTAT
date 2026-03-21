@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.res.stringResource
 import com.ethiostat.app.R
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +27,54 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
+fun AccountSourceType.getDisplayNameResId(): Int {
+    return when (this) {
+        AccountSourceType.TELEBIRR -> R.string.source_telebirr
+        AccountSourceType.MPESA -> R.string.source_mpesa
+        AccountSourceType.AMOLE -> R.string.source_amole
+        AccountSourceType.AWASH_BIRR -> R.string.source_awash_birr
+        AccountSourceType.HELLOCASH -> R.string.source_hellocash
+        AccountSourceType.KIFIYA -> R.string.source_kifiya
+        AccountSourceType.BERHAN_BANK -> R.string.source_berhan_bank
+        AccountSourceType.BUNNA_BANK -> R.string.source_bunna_bank
+        AccountSourceType.LIB -> R.string.source_lib
+        AccountSourceType.AMHARA_BANK -> R.string.source_amhara_bank
+        AccountSourceType.GOH_BANK -> R.string.source_goh_bank
+        AccountSourceType.OROMIA_BANK -> R.string.source_oromia_bank
+        AccountSourceType.SIINQEE_BANK -> R.string.source_siinqee_bank
+        AccountSourceType.CBO -> R.string.source_cbo
+        AccountSourceType.CBE -> R.string.source_cbe
+        AccountSourceType.BOA -> R.string.source_boa
+        AccountSourceType.GADAA_BANK -> R.string.source_gadaa_bank
+        AccountSourceType.TELECOM -> R.string.source_telecom
+        else -> R.string.source_unknown
+    }
+}
+
+fun AccountSourceType.getFullDisplayNameResId(): Int {
+    return when (this) {
+        AccountSourceType.TELEBIRR -> R.string.source_telebirr_full
+        AccountSourceType.MPESA -> R.string.source_mpesa_full
+        AccountSourceType.AMOLE -> R.string.source_amole_full
+        AccountSourceType.AWASH_BIRR -> R.string.source_awash_birr_full
+        AccountSourceType.HELLOCASH -> R.string.source_hellocash_full
+        AccountSourceType.KIFIYA -> R.string.source_kifiya_full
+        AccountSourceType.BERHAN_BANK -> R.string.source_berhan_bank_full
+        AccountSourceType.BUNNA_BANK -> R.string.source_bunna_bank_full
+        AccountSourceType.LIB -> R.string.source_lib_full
+        AccountSourceType.AMHARA_BANK -> R.string.source_amhara_bank_full
+        AccountSourceType.GOH_BANK -> R.string.source_goh_bank_full
+        AccountSourceType.OROMIA_BANK -> R.string.source_oromia_bank_full
+        AccountSourceType.SIINQEE_BANK -> R.string.source_siinqee_bank_full
+        AccountSourceType.CBO -> R.string.source_cbo_full
+        AccountSourceType.CBE -> R.string.source_cbe_full
+        AccountSourceType.BOA -> R.string.source_boa_full
+        AccountSourceType.GADAA_BANK -> R.string.source_gadaa_bank_full
+        AccountSourceType.TELECOM -> R.string.source_telecom_full
+        else -> R.string.source_unknown
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -149,10 +198,6 @@ fun AccountSourcesScreen(
                         AccountSourceCard(
                             source = source,
                             onEdit = { editingSource = source },
-                            onDelete = {
-                                android.util.Log.d("EthioStat", "AccountSourcesScreen: onDelete called for ${source.displayName}")
-                                onDeleteSource(source)
-                            },
                             onToggle = {
                                 android.util.Log.d("EthioStat", "AccountSourcesScreen: onToggle called for ${source.displayName}")
                                 onToggleSource(source)
@@ -174,7 +219,8 @@ fun AccountSourcesScreen(
                 android.util.Log.d("EthioStat", "AccountSourcesScreen: onAdd called for ${source.displayName}")
                 onAddSource(source)
                 showAddDialog = false
-            }
+            },
+            existingTypes = accountSources.map { it.type }.toSet()
         )
     }
 
@@ -207,7 +253,6 @@ fun AccountSourcesScreen(
 private fun AccountSourceCard(
     source: AccountSource,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
     onToggle: () -> Unit,
     onReset: () -> Unit
 ) {
@@ -223,16 +268,6 @@ private fun AccountSourceCard(
         )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Toggle switch in top-right
-            Switch(
-                checked = source.isEnabled,
-                onCheckedChange = { onToggle() },
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(2.dp)
-                    .scale(0.6f)
-            )
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -258,8 +293,11 @@ private fun AccountSourceCard(
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(4.dp))
+                    val localizedName = stringResource(id = source.type.getDisplayNameResId())
+                    val displayText = if (source.displayName == source.type.displayName) localizedName else source.displayName
+
                     Text(
-                        text = source.displayName,
+                        text = displayText,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -270,9 +308,10 @@ private fun AccountSourceCard(
                     )
                 }
 
-                // Action row: Reset | Edit | Delete
+                // Action row: Reset | Edit | Toggle
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     IconButton(
@@ -296,17 +335,11 @@ private fun AccountSourceCard(
                             modifier = Modifier.size(14.dp)
                         )
                     }
-                    IconButton(
-                        onClick = onDelete,
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Delete",
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
+                    Switch(
+                        checked = source.isEnabled,
+                        onCheckedChange = { onToggle() },
+                        modifier = Modifier.scale(0.5f)
+                    )
                 }
             }
         }
@@ -411,83 +444,136 @@ private fun ResetTransactionsDialog(
 @Composable
 fun AddAccountSourceDialog(
     onDismiss: () -> Unit,
-    onAdd: (AccountSource) -> Unit
+    onAdd: (AccountSource) -> Unit,
+    existingTypes: Set<AccountSourceType> = emptySet()
 ) {
-    var name by remember { mutableStateOf("") }
-    var displayName by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf(AccountSourceType.TELEBIRR) }
-    var expanded by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedType by remember { mutableStateOf<AccountSourceType?>(null) }
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    // Filter out already-added types; apply search across localized full name + short name
+    val availableTypes = remember(searchQuery, existingTypes) {
+        AccountSourceType.ALL_SOURCES
+            .filter { it !in existingTypes }
+            .filter { type ->
+                val full = context.getString(type.getFullDisplayNameResId())
+                val short = context.getString(type.getDisplayNameResId())
+                searchQuery.isBlank() || 
+                full.contains(searchQuery, ignoreCase = true) || 
+                short.contains(searchQuery, ignoreCase = true)
+            }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.add_transaction_source)) },
         text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                // Search box
                 OutlinedTextField(
-                    value = displayName,
-                    onValueChange = { displayName = it },
-                    label = { Text(stringResource(R.string.display_name)) },
-                    placeholder = { Text("e.g., My CBE Account") },
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it; selectedType = null },
+                    label = { Text("Search platform") },
+                    placeholder = { Text("e.g. CBE, Telebirr, Awash…") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    OutlinedTextField(
-                        value = selectedType.name,
-                        onValueChange = { },
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.source_type)) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                if (availableTypes.isEmpty()) {
+                    Text(
+                        text = if (searchQuery.isBlank())
+                            "All supported platforms have been added."
+                        else
+                            "No platform matches \" $searchQuery\".",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    // Scrollable list of matching platforms
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                            .heightIn(max = 280.dp)
                     ) {
-                        AccountSourceType.values().forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type.name) },
-                                onClick = {
-                                    selectedType = type
-                                    expanded = false
+                        availableTypes.forEach { sourceType ->
+                            val isSelected = selectedType == sourceType
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { selectedType = sourceType },
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                tonalElevation = if (isSelected) 4.dp else 0.dp
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        val fullName = stringResource(id = sourceType.getFullDisplayNameResId())
+                                        val shortName = stringResource(id = sourceType.getDisplayNameResId())
+                                        Text(
+                                            text = "$fullName ($shortName)",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                        if (sourceType.shortCode.isNotEmpty()) {
+                                            Text(
+                                                text = "Short code: ${sourceType.shortCode}",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                    if (isSelected) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
-                            )
+                            }
                         }
                     }
                 }
 
-                OutlinedTextField(
-                    value = phoneNumber,
-                    onValueChange = { phoneNumber = it },
-                    label = { Text(stringResource(R.string.phone_number_sender)) },
-                    placeholder = { Text("e.g., 830, 251994, CBE") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // Preview of what will be added
+                selectedType?.let { type ->
+                    val typeLocalizedName = stringResource(id = type.getDisplayNameResId())
+                    Divider()
+                    Text(
+                        text = "Will add: $typeLocalizedName (sender: ${type.shortCode.ifEmpty { "–" }})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (displayName.isNotBlank() && phoneNumber.isNotBlank()) {
+                    selectedType?.let { type ->
                         onAdd(
                             AccountSource(
-                                name = name.ifBlank { displayName },
-                                displayName = displayName,
-                                type = selectedType,
-                                phoneNumber = phoneNumber
+                                name = type.name,
+                                displayName = type.displayName,
+                                type = type,
+                                phoneNumber = type.shortCode
                             )
                         )
                     }
                 },
-                enabled = displayName.isNotBlank() && phoneNumber.isNotBlank()
+                enabled = selectedType != null
             ) {
                 Text(stringResource(R.string.add))
             }
@@ -499,6 +585,7 @@ fun AddAccountSourceDialog(
         }
     )
 }
+
 
 @Composable
 private fun EditAccountSourceDialog(
@@ -544,13 +631,16 @@ private fun EditAccountSourceDialog(
                         onDismissRequest = { expanded = false }
                     ) {
                         AccountSourceType.values().forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type.name) },
-                                onClick = {
-                                    selectedType = type
-                                    expanded = false
-                                }
-                            )
+                            if (type != AccountSourceType.UNKNOWN && type != AccountSourceType.BANK_AWASH && type != AccountSourceType.BANK_OTHER) {
+                                val typeLocalizedName = stringResource(id = type.getDisplayNameResId())
+                                DropdownMenuItem(
+                                    text = { Text(typeLocalizedName) },
+                                    onClick = {
+                                        selectedType = type
+                                        expanded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }

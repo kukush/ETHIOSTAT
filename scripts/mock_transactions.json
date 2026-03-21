@@ -1,98 +1,62 @@
 [
   {
-    "bank": "127",
+    "sender": "127",
     "language": "English",
-    "type": "Debit",
-    "body": "Dear Customer, you have transferred 150.00 Birr to 09XXXXXXXX. Transaction ID: 1A2B3C. Balance: 500.00 Birr."
+    "type": "TELEBIRR",
+    "body": "Telebirr: You have received ETB 500.00 from 251911XXXXXX. Transaction ID: 1A2B3C. Current Balance: ETB 1,250.00."
   },
   {
-    "bank": "127",
-    "language": "English",
-    "type": "Credit",
-    "body": "Dear Customer, 350.00 Birr transferred to your account from 09YYYYYYYY. Balance: 850.00 Birr."
-  },
-  {
-    "bank": "127",
+    "sender": "127",
     "language": "Amharic",
-    "type": "Debit",
+    "type": "TELEBIRR",
     "body": "ለ 0912XXXXXX ብር 100.00 በተሳካ ሁኔታ ልከዋል። የግብይት መታወቂያ: 9F431M2YC5። ቀሪ ሂሳብ: 750.00 ብር።"
   },
   {
-    "bank": "127",
-    "language": "Oromiffa",
-    "type": "Credit",
-    "body": "0911XXXXXX irraa Qarshii 250.00 qaqqabeera. ID gurgurtaa: 8E320N1XB4."
-  },
-  {
-    "bank": "CBE",
+    "sender": "889",
     "language": "English",
-    "type": "Debit",
-    "body": "Dear Customer, ETB 1,000.00 has been debited from your account 1000xxxxxx on 15/03/26 14:45. Balance: ETB 14,000.00. Thank you for banking with CBE."
+    "type": "CBE",
+    "body": "Dear Customer, ETB 1,000.00 has been debited from your account 1000xxxxxx on 22/03/26 10:45. Balance: ETB 14,000.00. Thank you for banking with CBE."
   },
   {
-    "bank": "CBE",
-    "language": "English",
-    "type": "Credit",
-    "body": "Dear Customer, your account 1000xxxxxx has been credited with ETB 2,000.00 on 15/03/26 10:30. Balance: ETB 16,000.00. Thank you for banking with CBE."
-  },
-  {
-    "bank": "CBE",
+    "sender": "889",
     "language": "Amharic",
-    "type": "Debit",
-    "body": "ውድ ደንበኛችን፤ ከሂሳብዎ (1000xxxxxx) ላይ ብር 500.00 ወጪ ሆኗል (15/03/26 15:30)። ቀሪ ሂሳብዎ ብር 15,500.00 ነው። ከኢትዮጵያ ንግድ ባንክ ጋር ስለሚሰሩ እናመሰግናለን።"
+    "type": "CBE",
+    "body": "ውድ ደንበኛችን፤ ከሂሳብዎ (1000xxxxxx) ላይ ብር 500.00 ወጪ ሆኗል (22/03/26 15:30)። ቀሪ ሂሳብዎ ብር 15,500.00 ነው። ከኢትዮጵያ ንግድ ባንክ ጋር ስለሚሰሩ እናመሰግናለን።"
   },
   {
-    "bank": "CBE",
-    "language": "Oromiffa",
-    "type": "Credit",
-    "body": "Maamilaa kabajamoo, herregni keessan 1000xxxxxx guyyaa 15/03/26 10:30 irratti qarshii 4,500.00 akka seene galmeeffameera."
-  },
-  {
-    "bank": "BOA",
+    "sender": "815",
     "language": "English",
-    "type": "Debit",
-    "body": "Dear Customer, your account ...5678 has been debited ETB 250.00. Balance: ETB 750.00."
+    "type": "BOA",
+    "body": "Dear Customer, your account ...5678 has been debited ETB 250.00. Balance: ETB 750.00. BOA."
   },
   {
-    "bank": "BOA",
+    "sender": "901",
     "language": "English",
-    "type": "Credit",
-    "body": "Dear Customer, your account ...1234 has been credited ETB 1,250.00. Balance: ETB 2,000.00."
+    "type": "AWASH_BIRR",
+    "body": "Dear Customer, your Awash account ...9100 has been debited ETB 120.00. Balance: ETB 1,880.00."
   },
   {
-    "bank": "BOA",
-    "language": "Amharic",
-    "type": "Debit",
-    "body": "ውድ ደንበኛችን፤ ከሂሳብዎ (...5678) ላይ ብር 750.00 ወጪ ሆኗል።"
-  },
-  {
-    "bank": "BOA",
-    "language": "Oromiffa",
-    "type": "Credit",
-    "body": "Maamila Kabajamoo, Herregni keessan ...1234 qarshii 2,250.00 galii ta'eera."
-  },
-  {
-    "bank": "AWASHBANK",
+    "sender": "842",
     "language": "English",
-    "type": "Debit",
-    "body": "Dear Customer, your account ...9100 has been debited ETB 120.00. Balance: ETB 1,880.00."
+    "type": "AMOLE",
+    "body": "Your Amole wallet has been debited ETB 150.00. Available balance: ETB 2,350.00."
   },
   {
-    "bank": "AWASHBANK",
+    "sender": "803",
     "language": "English",
-    "type": "Credit",
-    "body": "Dear Customer, your account ...4500 has been credited ETB 5,500.00. Balance: ETB 7,380.00."
+    "type": "HELLOCASH",
+    "body": "HelloCash: Transaction of ETB 300.00 successful. Your balance is 1,200.00. Ref: HC99221."
   },
   {
-    "bank": "AWASHBANK",
-    "language": "Amharic",
-    "type": "Debit",
-    "body": "ውድ ደንበኛችን፤ ከሂሳብዎ (...9100) ላይ ብር 1,500.00 ወጪ ሆኗል።"
+    "sender": "841",
+    "language": "English",
+    "type": "CBO",
+    "body": "Coop Bank: ETB 400.00 credited to account 1002xxxx. Balance: ETB 2,400.00."
   },
   {
-    "bank": "AWASHBANK",
-    "language": "Oromiffa",
-    "type": "Credit",
-    "body": "Maamila Kabajamoo, Herregni keessan ...9100 qarshii 800.00 galii ta'eera."
+    "sender": "251994",
+    "language": "English",
+    "type": "TELECOM",
+    "body": "Your account balance is 234.50 ETB. Valid until 30/04/2026. Dial *804# for more."
   }
 ]

@@ -27,6 +27,7 @@ import com.ethiostat.app.domain.model.TimePeriod
 import com.ethiostat.app.domain.model.AccountSourceType
 import com.ethiostat.app.ui.theme.ErrorRed
 import com.ethiostat.app.ui.theme.SuccessGreen
+import com.ethiostat.app.ui.settings.getDisplayNameResId
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -148,8 +149,10 @@ fun FinancialSummaryCard(
                     )
                     
                     accountSources.filter { it.isEnabled }.forEach { source ->
+                        // Always use the localized abbreviation (e.g. CBE, BOA, Telebirr) for the dashboard tabs
+                        val displayStr = stringResource(id = source.type.getDisplayNameResId())
                         SourceTab(
-                            label = source.displayName,
+                            label = displayStr,
                             isSelected = selectedAccountSource?.id == source.id,
                             onClick = { onAccountSourceChange(source) }
                         )

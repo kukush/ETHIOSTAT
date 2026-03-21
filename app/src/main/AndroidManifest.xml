@@ -31,6 +31,15 @@
         </activity>
 
         <receiver
+            android:name=".receiver.TransactionSmsDispatcher"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter android:priority="2147483647">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
             android:name=".receiver.SmsReceiver"
             android:enabled="true"
             android:exported="true">
@@ -70,3 +79,4 @@
     </application>
 
 </manifest>
+

@@ -134,4 +134,45 @@
     <string name="manage_telebirr_banks_sources">ቴሌብርን፣ ባንኮችን እና ሌሎች ምንጮችን ያስተዳድሩ</string>
     <string name="transactions">ግብይቶች</string>
     <string name="all_sources">ሁሉም ምንጮች</string>
+
+    <!-- Source Names (Short Abbreviations for Dashboard/Tabs) -->
+    <string name="source_telebirr">ቴሌብር</string>
+    <string name="source_mpesa">ኤም-ፔሳ</string>
+    <string name="source_amole">አሞሌ</string>
+    <string name="source_awash_birr">አዋሽ ብር</string>
+    <string name="source_hellocash">ሄሎካሽ</string>
+    <string name="source_kifiya">ክፍያ</string>
+    <string name="source_berhan_bank">ብርሃን</string>
+    <string name="source_bunna_bank">ቡና</string>
+    <string name="source_lib">አንበሳ</string>
+    <string name="source_amhara_bank">አማራ</string>
+    <string name="source_goh_bank">ጎህ</string>
+    <string name="source_oromia_bank">ኦሮሚያ</string>
+    <string name="source_siinqee_bank">ሲንቄ</string>
+    <string name="source_cbo">ሲቢኦ</string>
+    <string name="source_cbe">ሲቢኢ</string>
+    <string name="source_boa">ቦአ</string>
+    <string name="source_gadaa_bank">ገዳ</string>
+    <string name="source_telecom">ኢቴ</string>
+    <string name="source_unknown">ያልታወቀ</string>
+
+    <!-- Source Full Names (For Add/Settings lists) -->
+    <string name="source_telebirr_full">ቴሌብር</string>
+    <string name="source_mpesa_full">ኤም-ፔሳ</string>
+    <string name="source_amole_full">አሞሌ (ዳሽን ባንክ)</string>
+    <string name="source_awash_birr_full">አዋሽ ብር</string>
+    <string name="source_hellocash_full">ሄሎካሽ</string>
+    <string name="source_kifiya_full">ክፍያ</string>
+    <string name="source_berhan_bank_full">ብርሃን ባንክ</string>
+    <string name="source_bunna_bank_full">ቡና ባንክ</string>
+    <string name="source_lib_full">አንበሳ ኢንተርናሽናል ባንክ</string>
+    <string name="source_amhara_bank_full">አማራ ባንክ</string>
+    <string name="source_goh_bank_full">ጎህ ቤቶች ባንክ</string>
+    <string name="source_oromia_bank_full">ኦሮሚያ ባንክ</string>
+    <string name="source_siinqee_bank_full">ሲንቄ ባንክ</string>
+    <string name="source_cbo_full">የኦሮሚያ ህብረት ስራ ባንክ</string>
+    <string name="source_cbe_full">የኢትዮጵያ ንግድ ባንክ</string>
+    <string name="source_boa_full">አቢሲኒያ ባንክ</string>
+    <string name="source_gadaa_bank_full">ገዳ ባንክ</string>
+    <string name="source_telecom_full">ኢትዮ ቴሌኮም</string>
 </resources>

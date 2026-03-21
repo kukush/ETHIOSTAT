@@ -5,7 +5,10 @@ import androidx.room.PrimaryKey
 import com.ethiostat.app.domain.model.AccountSource
 import com.ethiostat.app.domain.model.AccountSourceType
 
-@Entity(tableName = "account_sources")
+@Entity(
+    tableName = "account_sources",
+    indices = [androidx.room.Index(value = ["type"], unique = true)]
+)
 data class AccountSourceEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -20,7 +23,18 @@ fun AccountSourceEntity.toDomain(): AccountSource {
     return AccountSource(
         id = id,
         name = name,
-        type = AccountSourceType.valueOf(type),
+        type = try {
+            AccountSourceType.valueOf(type)
+        } catch (e: Exception) {
+            // Map legacy names to new ones or fallback to UNKNOWN
+            when (type) {
+                "BANK_CBE" -> AccountSourceType.CBE
+                "BANK_BOA" -> AccountSourceType.BOA
+                "BANK_AWASH" -> AccountSourceType.AWASH_BIRR
+                "TELEBIRR_SERVICE" -> AccountSourceType.TELEBIRR
+                else -> AccountSourceType.UNKNOWN
+            }
+        },
         phoneNumber = phoneNumber,
         displayName = displayName,
         isEnabled = isEnabled,

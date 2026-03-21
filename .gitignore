@@ -85,3 +85,4 @@ lint-baseline.xml
 *~
 *.swp
 *.bak
+.gradle-custom/

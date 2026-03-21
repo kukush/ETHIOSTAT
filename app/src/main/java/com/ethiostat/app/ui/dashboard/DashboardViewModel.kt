@@ -1,7 +1,12 @@
 package com.ethiostat.app.ui.dashboard
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.ethiostat.app.domain.model.AppLanguage
 import com.ethiostat.app.domain.model.BalancePackage
 import com.ethiostat.app.domain.model.BalancePackageFactory
@@ -25,16 +30,44 @@ class DashboardViewModel(
     private val syncBalanceUseCase: SyncBalanceUseCase,
     private val changeLanguageUseCase: ChangeLanguageUseCase,
     private val readTransactionSourceSmsUseCase: ReadTransactionSourceSmsUseCase,
-    private val syncSmsHistoryUseCase: com.ethiostat.app.domain.usecase.SyncSmsHistoryUseCase
+    private val syncSmsHistoryUseCase: com.ethiostat.app.domain.usecase.SyncSmsHistoryUseCase,
+    private val context: Context
 ) : ViewModel() {
-    
+
     private val _state = MutableStateFlow(DashboardState())
     val state: StateFlow<DashboardState> = _state.asStateFlow()
-    
+
+    /**
+     * Receives USSD popup text captured either by [SyncBalanceUseCase] (Path 1)
+     * or [UssdAccessibilityService] (Path 2 fallback).  Updates [DashboardState.ussdResponseText].
+     */
+    private val ussdTextReceiver = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context?, intent: Intent?) {
+            val text = intent?.getStringExtra("ussd_text") ?: return
+            android.util.Log.d("DashboardViewModel", "USSD popup text received: $text")
+            _state.update { it.copy(ussdResponseText = text) }
+        }
+    }
+
     init {
+        LocalBroadcastManager.getInstance(context).registerReceiver(
+            ussdTextReceiver,
+            IntentFilter("com.ethiostat.app.USSD_RESPONSE_RECEIVED")
+        )
         loadData()
-        // Automatically refresh telecom data on app start
-        refreshTelecomDataOnStart()
+        // Scan existing SMS history only — no USSD call on startup
+        refreshSmsDataOnStart()
+
+        // Ensure default sources and deduplicate ONCE on startup
+        viewModelScope.launch {
+            val currentSources = repository.getAccountSources().first()
+            ensureDefaultSources(currentSources)
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(ussdTextReceiver)
     }
     
     fun processIntent(intent: DashboardIntent) {
@@ -103,9 +136,6 @@ class DashboardViewModel(
                     val language = AppLanguage.fromCode(config?.appLanguage ?: "en")
                     
                     android.util.Log.d("EthioStat", "loadData: accountSources.size=${accountSources.size}")
-                    
-                    // Create default sources if they don't exist
-                    ensureDefaultSources(accountSources)
                     
                     _state.update {
                         it.copy(
@@ -190,26 +220,27 @@ class DashboardViewModel(
         }
     }
     
-    private fun refreshTelecomDataOnStart() {
+    /**
+     * On app start: scan existing SMS history only — no USSD call.
+     * The USSD call (*804#) is only triggered by the user pressing the refresh button,
+     * which maps to [DashboardIntent.RefreshUssd804].
+     */
+    private fun refreshSmsDataOnStart() {
         viewModelScope.launch {
             try {
-                // Trigger *804# USSD for live telecom data immediately
-                syncBalanceUseCase.refreshTelecomData()
-
-                // Small delay then scan history
-                kotlinx.coroutines.delay(1000)
+                // Scan the last 14 days of SMS history for balances and transactions
                 syncSmsHistoryUseCase(forceFullScan = false)
 
-                // Scan transaction sources
+                // Scan each registered transaction source SMS inbox
                 val sources = _state.value.accountSources
                 if (sources.isNotEmpty()) {
                     readTransactionSourceSmsUseCase.invoke(sources)
                 }
-                
-                // Final load to ensure all counts are updated
+
+                // Reload UI with the freshly scanned data
                 loadData()
             } catch (e: Exception) {
-                android.util.Log.w("DashboardViewModel", "Failed startup sync: ${e.message}")
+                android.util.Log.w("DashboardViewModel", "Failed startup SMS scan: ${e.message}")
             }
         }
     }
@@ -437,35 +468,50 @@ class DashboardViewModel(
         _state.update { it.copy(showAccountSourcesScreen = false) }
     }
     
+    /**
+     * Seeds the 4 [AccountSourceType.DEFAULT_SOURCES] on a fresh install.
+     *
+     * Guard: checks by [AccountSourceType] — if the user deletes a source, it will NOT
+     * be re-created automatically. Each type can only be seeded once.
+     */
     private suspend fun ensureDefaultSources(currentSources: List<com.ethiostat.app.domain.model.AccountSource>) {
-        val defaultSources = listOf(
-            com.ethiostat.app.domain.model.AccountSource(
-                name = "TeleBirr",
-                displayName = "TeleBirr",
-                type = com.ethiostat.app.domain.model.AccountSourceType.TELEBIRR,
-                phoneNumber = "127"  // TeleBirr Oromo/financial SMS sender
-            ),
-            com.ethiostat.app.domain.model.AccountSource(
-                name = "CBE",
-                displayName = "Commercial Bank of Ethiopia",
-                type = com.ethiostat.app.domain.model.AccountSourceType.BANK_CBE,
-                phoneNumber = "CBE"  // Commercial Bank of Ethiopia SMS sender
-            ),
-            com.ethiostat.app.domain.model.AccountSource(
-                name = "BOA",
-                displayName = "Bank of Abyssinia",
-                type = com.ethiostat.app.domain.model.AccountSourceType.BANK_BOA,
-                phoneNumber = "BOA"  // Bank of Abyssinia SMS sender
-            )
-        )
-        
-        defaultSources.forEach { defaultSource ->
-            val exists = currentSources.any { 
-                it.displayName.equals(defaultSource.displayName, ignoreCase = true) 
+        // 1. Deduplicate by type first to clean up existing mess (14 sources issue)
+        val typeGroups = currentSources.groupBy { it.type }
+        typeGroups.forEach { (type, sources) ->
+            if (sources.size > 1 && type != com.ethiostat.app.domain.model.AccountSourceType.UNKNOWN) {
+                // Keep the one with the lowest ID (usually the first one created)
+                val toKeep = sources.minBy { it.id }
+                sources.filter { it.id != toKeep.id }.forEach { toDelete ->
+                    android.util.Log.d("EthioStat", "Deleting duplicate source: ${toDelete.displayName} (Type: ${toDelete.type})")
+                    repository.deleteAccountSource(toDelete)
+                }
             }
-            if (!exists) {
-                android.util.Log.d("EthioStat", "Creating default source: ${defaultSource.displayName}")
-                repository.insertAccountSource(defaultSource)
+        }
+
+        // 2. Refresh list after deduplication
+        val updatedSources = repository.getAccountSources().first()
+        
+        // 3. Seed missing defaults
+        com.ethiostat.app.domain.model.AccountSourceType.DEFAULT_SOURCES.forEach { sourceType ->
+            val alreadyExists = updatedSources.any { it.type == sourceType }
+            if (!alreadyExists) {
+                val newSource = com.ethiostat.app.domain.model.AccountSource(
+                    name = sourceType.name,
+                    displayName = sourceType.displayName,
+                    type = sourceType,
+                    phoneNumber = sourceType.shortCode
+                )
+                android.util.Log.d("EthioStat", "Seeding default source: ${sourceType.displayName} (${sourceType.shortCode})")
+                repository.insertAccountSource(newSource)
+            }
+        }
+
+        // 4. Remove unsupported/unknown sources (legacy cleanup)
+        val finalSources = repository.getAccountSources().first()
+        finalSources.forEach { source ->
+            if (source.type == com.ethiostat.app.domain.model.AccountSourceType.UNKNOWN) {
+                android.util.Log.d("EthioStat", "Removing unsupported source: ${source.displayName}")
+                repository.deleteAccountSource(source)
             }
         }
     }

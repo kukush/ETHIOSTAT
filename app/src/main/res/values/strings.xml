@@ -137,4 +137,45 @@
     <string name="manage_telebirr_banks_sources">Manage Telebirr, banks, and other sources</string>
     <string name="transactions">Transactions</string>
     <string name="all_sources">All Sources</string>
+
+    <!-- Source Names (Short Abbreviations for Dashboard/Tabs) -->
+    <string name="source_telebirr">Telebirr</string>
+    <string name="source_mpesa">M-PESA</string>
+    <string name="source_amole">Amole</string>
+    <string name="source_awash_birr">Awash Birr</string>
+    <string name="source_hellocash">Hellocash</string>
+    <string name="source_kifiya">Kifiya</string>
+    <string name="source_berhan_bank">Berhan</string>
+    <string name="source_bunna_bank">Bunna</string>
+    <string name="source_lib">Lion</string>
+    <string name="source_amhara_bank">Amhara</string>
+    <string name="source_goh_bank">Goh</string>
+    <string name="source_oromia_bank">Oromia</string>
+    <string name="source_siinqee_bank">Siinqee</string>
+    <string name="source_cbo">CBO</string>
+    <string name="source_cbe">CBE</string>
+    <string name="source_boa">BOA</string>
+    <string name="source_gadaa_bank">Gadaa</string>
+    <string name="source_telecom">ET</string>
+    <string name="source_unknown">Unknown</string>
+
+    <!-- Source Full Names (For Add/Settings lists) -->
+    <string name="source_telebirr_full">Telebirr</string>
+    <string name="source_mpesa_full">M-PESA</string>
+    <string name="source_amole_full">Amole (Dashen Bank)</string>
+    <string name="source_awash_birr_full">Awash Birr</string>
+    <string name="source_hellocash_full">Hellocash</string>
+    <string name="source_kifiya_full">Kifiya</string>
+    <string name="source_berhan_bank_full">Berhan Bank</string>
+    <string name="source_bunna_bank_full">Bunna Bank</string>
+    <string name="source_lib_full">Lion International Bank</string>
+    <string name="source_amhara_bank_full">Amhara Bank</string>
+    <string name="source_goh_bank_full">Goh Betoch Bank</string>
+    <string name="source_oromia_bank_full">Oromia Bank</string>
+    <string name="source_siinqee_bank_full">Siinqee Bank</string>
+    <string name="source_cbo_full">Cooperative Bank of Oromia</string>
+    <string name="source_cbe_full">Commercial Bank of Ethiopia</string>
+    <string name="source_boa_full">Bank of Abyssinia</string>
+    <string name="source_gadaa_bank_full">Gadaa Bank</string>
+    <string name="source_telecom_full">Ethio Telecom</string>
 </resources>

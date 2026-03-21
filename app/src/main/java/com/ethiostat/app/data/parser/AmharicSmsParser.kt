@@ -95,7 +95,7 @@ class AmharicSmsParser : SmsParser {
         val creditMatch = creditPattern.find(smsBody)
         if (creditMatch != null) {
             val amount = creditMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
-            return createTransaction(amount, TransactionType.INCOME, "CBE Credit (Amharic)", sender, AccountSourceType.BANK_CBE)
+            return createTransaction(amount, TransactionType.INCOME, "CBE Credit (Amharic)", sender, AccountSourceType.CBE)
         }
 
         // CBE Amharic Debit: በብር 1,000.00 ተቀንሷል
@@ -103,7 +103,7 @@ class AmharicSmsParser : SmsParser {
         val debitMatch = debitPattern.find(smsBody)
         if (debitMatch != null) {
             val amount = debitMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
-            return createTransaction(amount, TransactionType.EXPENSE, "CBE Debit (Amharic)", sender, AccountSourceType.BANK_CBE)
+            return createTransaction(amount, TransactionType.EXPENSE, "CBE Debit (Amharic)", sender, AccountSourceType.CBE)
         }
         return null
     }
@@ -114,7 +114,7 @@ class AmharicSmsParser : SmsParser {
         val creditMatch = creditPattern.find(smsBody)
         if (creditMatch != null) {
             val amount = creditMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
-            return createTransaction(amount, TransactionType.INCOME, "BOA Credit (Amharic)", sender, AccountSourceType.BANK_BOA)
+            return createTransaction(amount, TransactionType.INCOME, "BOA Credit (Amharic)", sender, AccountSourceType.BOA)
         }
 
         // BOA Amharic Debit: ብር 1,000.00 ወጪ ተደርጓል
@@ -122,7 +122,7 @@ class AmharicSmsParser : SmsParser {
         val debitMatch = debitPattern.find(smsBody)
         if (debitMatch != null) {
             val amount = debitMatch.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
-            return createTransaction(amount, TransactionType.EXPENSE, "BOA Debit (Amharic)", sender, AccountSourceType.BANK_BOA)
+            return createTransaction(amount, TransactionType.EXPENSE, "BOA Debit (Amharic)", sender, AccountSourceType.BOA)
         }
         return null
     }

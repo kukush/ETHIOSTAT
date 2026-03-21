@@ -73,7 +73,7 @@ class TransactionClassificationUseCase(
             phoneNumber.contains("251994") || phoneNumber.contains("ethio", ignoreCase = true) -> 
                 AccountSourceType.TELECOM
             phoneNumber.contains("cbe", ignoreCase = true) || phoneNumber.contains("commercial", ignoreCase = true) -> 
-                AccountSourceType.BANK_CBE
+                AccountSourceType.CBE
             phoneNumber.contains("awash", ignoreCase = true) -> 
                 AccountSourceType.BANK_AWASH
             else -> null

@@ -182,7 +182,7 @@ class OromoSmsParser : SmsParser {
         }
         
         val bankType = when {
-            sender.contains("cbe", ignoreCase = true) -> AccountSourceType.BANK_CBE
+            sender.contains("cbe", ignoreCase = true) -> AccountSourceType.CBE
             sender.contains("awash", ignoreCase = true) -> AccountSourceType.BANK_AWASH
             else -> AccountSourceType.BANK_OTHER
         }
